@@ -1,0 +1,290 @@
+import { RoutineIconProps } from "@/resources/SVG";
+import {
+  FormState,
+  Theme,
+  WorkoutDataCache,
+  RoutineData,
+  WorkoutData,
+  JWTPayload,
+  JWTHeader,
+} from "./types";
+import md5 from "md5";
+import jsSHA from "jssha";
+import { OFFLINE_USER_ID } from "./constants";
+
+export const getTheme: () => Theme = () => {
+  const theme = window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+  return localStorage.getItem("theme") ?? theme;
+};
+
+export const getYoutubeThumbnail = (youtubeID: string) => {
+  if (youtubeID === "") return "" as const;
+  return `https://i3.ytimg.com/vi/${youtubeID}/mqdefault.jpg` as const;
+};
+
+export const genDefaultFormState = <T>(resetValue: T): FormState<T> => {
+  return Object.keys(resetValue).reduce<FormState<T>>((prev, key) => {
+    prev[key] = { error: "", value: resetValue[key] };
+    return prev;
+  }, {} as FormState<T>);
+};
+
+//! Validators
+
+export const validateNumber = (value: string, minimumValue: number): string => {
+  if (!/^\d*$/.test(value)) return "Number is invalid.";
+  return +value < minimumValue
+    ? `Number must be greater than ${minimumValue - 1}.`
+    : "";
+};
+
+export const validateName = (value: string): string =>
+  value.length > 0 ? "" : "Name can't be empty.";
+
+export const validateYoutubeLink = (value: string): string =>
+  /^[\w-]{11}$|^$/.test(value) ? "" : "Please enter a valid video id.";
+
+const genIconProps0 = (value: string): RoutineIconProps => {
+  // convert value into a 128bit hash into parameters for the routine icon.
+  /* |byte 0-2|byte 3-5|byte 6-8|byte 9-11|byte 12-13|byte 14-15| */
+  /* |color0  |color1  |color2  |fill     |rotate    |remainder |*/
+
+  const shaObj = new jsSHA("SHA-1", "TEXT", {
+    hmacKey: { value, format: "TEXT" },
+  });
+  const hash = shaObj.getHash("HEX", { outputLen: 128 });
+
+  const stopColor0 = "#" + hash.substring(0, 6);
+  const stopColor1 = "#" + hash.substring(6, 12);
+  const stopColor2 = "#" + hash.substring(12, 18);
+  const fill = "#" + hash.substring(18, 24);
+  const angle = parseInt(hash.substring(24, 28), 16) % 360;
+  return { stopColor0, stopColor1, stopColor2, fill, angle, hash };
+};
+const orders = [
+  [0, 1, 2],
+  [0, 2, 1],
+  [1, 0, 2],
+  [1, 2, 0], //!
+  [2, 0, 1], //!
+  [2, 1, 0],
+];
+
+const byteToOrder = (byte: number) => {
+  const n = ((byte / 256) * orders.length) | 0;
+  return orders[n];
+};
+
+const shuffle = (bytes: Uint8Array, order: number[]) => {
+  return [bytes[order[0]], bytes[order[1]], bytes[order[2]]];
+};
+
+const byteToHex = (byte: number) => byte.toString(16).padStart(2, "0");
+
+const getColor = (color: Uint8Array, byte: number): string => {
+  const order = byteToOrder(byte);
+  const shuffledColor = shuffle(color, order);
+  const h = ((shuffledColor[0] / 256) * 360) | 0;
+  const s = `${((shuffledColor[1] / 256) * 100) | 0}`;
+  const l = `${((shuffledColor[2] / 256) * 100) | 0}`;
+  // return `hsl(${h}, ${s}%, ${l}%)`;
+  return "#" + shuffledColor.map(byteToHex).join("");
+};
+
+/**
+ * Converts an RGB color value to HSL. Conversion formula
+ * adapted from http://en.wikipedia.org/wiki/HSL_color_space.
+ * Assumes r, g, and b are contained in the set [0, 255] and
+ * returns h, s, and l in the set [0, 1].
+ *
+ * @param   {number}  r       The red color value
+ * @param   {number}  g       The green color value
+ * @param   {number}  b       The blue color value
+ * @return  {Array}           The HSL representation
+ */
+const rgbToHsl = (r: number, g: number, b: number) => {
+  r /= 255;
+  g /= 255;
+  b /= 255;
+  const vmax = Math.max(r, g, b);
+  const vmin = Math.min(r, g, b);
+  let h: number = 0;
+  let s: number;
+  let l = (vmax + vmin) / 2;
+
+  if (vmax === vmin) return [0, 0, l]; // achromatic
+
+  const d = vmax - vmin;
+  s = l > 0.5 ? d / (2 - vmax - vmin) : d / (vmax + vmin);
+  if (vmax === r) h = (g - b) / d + (g < b ? 6 : 0);
+  if (vmax === g) h = (b - r) / d + 2;
+  if (vmax === b) h = (r - g) / d + 4;
+  h /= 6;
+
+  return [(h * 360) | 0, Math.max(50, (s * 100) | 0), (l * 100) | 0];
+};
+
+const getColors = (color: Uint8Array, byte: number) => {
+  const order = byteToOrder(byte);
+  const shuffledColor = shuffle(color, order);
+  // const h = ((shuffledColor[0] / 256) * 360) | 0;
+  // const s = `${((shuffledColor[1] / 256) * 100) | 0}`;
+  // const l = `${((shuffledColor[2] / 256) * 100) | 0}`;
+  const [r, g, b] = shuffledColor;
+  const [h, s, l] = rgbToHsl(r, g, b);
+  return {
+    stopColor0: `hsl(${h}, ${s}%, ${l}%)`,
+    stopColor1: `hsl(${(h + 90) % 360}, ${s}%, ${l}%)`,
+    stopColor2: `hsl(${(h + 180) % 360}, ${s}%, ${l}%)`,
+    fill: `hsl(${(h + 270) % 360}, ${s}%, ${l}%)`,
+  };
+};
+
+// const shaObj = new jsSHA("SHA3-512", "TEXT");
+const genIconProps1 = (value: string): RoutineIconProps => {
+  // shaObj.update(value)
+  const shaObj = new jsSHA("SHA-224", "TEXT", {
+    hmacKey: { value, format: "TEXT" },
+  });
+
+  const hash = shaObj.getHash("UINT8ARRAY");
+  const hashString = shaObj.getHash("HEX");
+  // const hash = genRandomUintArray(20);
+  const byte0 = (hash[12] << 8) | hash[13];
+  const angle = (((byte0 >>> 7) / 512) * 360) | 0;
+  const stopColor0 = getColor(hash.subarray(0, 3), hash[14]);
+  const stopColor1 = getColor(hash.subarray(3, 6), hash[15]);
+  const stopColor2 = getColor(hash.subarray(6, 9), hash[16]);
+  const fill = getColor(hash.subarray(9, 12), hash[17]);
+  // return { stopColor0, stopColor1, stopColor2, fill, angle, hash: hashString };
+  return {
+    ...getColors(hash.subarray(0, 6), hash[14]),
+    angle,
+    hash: hashString,
+  };
+};
+
+export const genIconProps = false ? genIconProps0 : genIconProps1;
+
+const getCache = () => {
+  const cache = localStorage.getItem("cache");
+  if (cache === null) {
+    localStorage.setItem("cache", "{}");
+    return {};
+  }
+  return JSON.parse(cache) as WorkoutDataCache;
+};
+
+export const getRoutinesLS = () => {
+  const cache = getCache();
+  const routines: RoutineData[] = Object.keys(cache).map((routineID) => {
+    const { userID, routineName, indexNumber } = cache[routineID];
+    return { routineID: +routineID, userID, routineName, indexNumber };
+  });
+  routines.sort((a, b) => a.indexNumber - b.indexNumber);
+  return routines;
+};
+
+export const setRoutineLS = ({
+  routineID,
+  routineName,
+  userID,
+  indexNumber,
+}: RoutineData) => {
+  const cache = getCache();
+  if (routineID in cache) {
+    cache[routineID].routineName = routineName;
+    cache[routineID].userID = userID;
+    cache[routineID].indexNumber = indexNumber;
+  } else {
+    cache[routineID] = { routineName, userID, indexNumber, workouts: [] };
+  }
+  localStorage.setItem("cache", JSON.stringify(cache));
+};
+
+export const setRoutinesLS = (routines: RoutineData[]) => {
+  const cache = getCache();
+  const newCache: WorkoutDataCache = {};
+  for (const routine of routines) {
+    const { routineID, userID, routineName, indexNumber } = routine;
+    newCache[routineID] = {
+      routineName,
+      indexNumber,
+      userID,
+      workouts: routineID in cache ? cache[routineID].workouts : [],
+    };
+  }
+  localStorage.setItem("cache", JSON.stringify(newCache));
+};
+
+export const deleteRoutineLS = (routineData: RoutineData) => {
+  const cache = getCache();
+  const { [routineData.routineID]: toBeDeleted, ...rest } = cache;
+  localStorage.setItem("cache", JSON.stringify(rest));
+};
+
+export const getWorkoutsLS = (routineID: number): WorkoutData[] => {
+  const cache = getCache();
+  const workouts = cache[routineID].workouts;
+  workouts.sort((a, b) => a.indexNumber - b.indexNumber);
+  return workouts;
+};
+
+export const setWorkoutLS = (workoutData: WorkoutData) => {
+  const cache = getCache();
+  const { workouts } = cache[workoutData.routineID];
+  const index = workouts.findIndex(
+    (workout) => workout.workoutID === workoutData.workoutID
+  );
+  if (index === -1) workouts.push(workoutData);
+  else workouts[index] = workoutData;
+  localStorage.setItem("cache", JSON.stringify(cache));
+};
+
+export const setWorkoutsLS = (workouts: WorkoutData[]) => {
+  if (workouts.length === 0) return;
+  for (let i = 0; i < workouts.length; i++)
+    if (workouts[i].routineID !== workouts[0].routineID)
+      throw new Error("Routines in the array must all be the same");
+  const cache = getCache();
+  cache[workouts[0].routineID].workouts = workouts;
+  localStorage.setItem("cache", JSON.stringify(cache));
+};
+
+export const deleteWorkoutLS = (workoutData: WorkoutData) => {
+  const cache = getCache();
+  const { workouts } = cache[workoutData.routineID];
+  cache[workoutData.routineID].workouts = workouts.filter(
+    (workout) => workout.workoutID !== workoutData.workoutID
+  );
+  localStorage.setItem("cache", JSON.stringify(cache));
+};
+
+export const generateNonce = () => {
+  const randomValues = crypto.getRandomValues(new Uint32Array(4));
+
+  // Encode as UTF-8
+  const utf8Encoder = new TextEncoder();
+  const utf8Array = utf8Encoder.encode(
+    String.fromCharCode.apply(null, randomValues as any)
+  );
+  // Base64 encode the UTF-8 data
+  return btoa(String.fromCharCode.apply(null, utf8Array as any))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+};
+
+// if the user is offline then the ID number should be -1
+export const isUserLoggedIn = (userID: number) => userID !== OFFLINE_USER_ID;
+
+export const parseToken = (token: string) => {
+  const [header, payload, signature] = token.split(".");
+  return {
+    header: JSON.parse(window.atob(header)) as JWTHeader,
+    payload: JSON.parse(window.atob(payload)) as JWTPayload,
+    signature,
+  };
+};

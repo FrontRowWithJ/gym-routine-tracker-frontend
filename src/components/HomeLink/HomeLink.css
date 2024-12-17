@@ -1,0 +1,12 @@
+.home-button {
+  aspect-ratio: 1 / 1;
+  width: 3rem !important;
+  height: 3rem !important;
+  padding: 0;
+  background-color: transparent;
+  font-size: 1.5rem;
+  svg {
+    width: 50%;
+    height: 50%;
+  }
+}

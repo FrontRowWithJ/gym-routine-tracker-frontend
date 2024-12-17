@@ -1,0 +1,21 @@
+.main-page {
+  display: flex;
+  flex-direction: column;
+  background-color: brown;
+  width: 100%;
+  height: 100%;
+  
+  > nav {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+    gap: 0.5rem;
+    position: relative;
+
+    span {
+      flex-grow: 2;
+      text-align: center;
+    }
+  }
+}

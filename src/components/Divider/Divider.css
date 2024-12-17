@@ -1,0 +1,17 @@
+.divider {
+  opacity: 0.6;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: black;
+}
+
+.divider.horizontal {
+  height: 1px;
+  width: 100%;
+}
+
+.divider.vertical {
+  height: 100%;
+  width: 1px;
+}

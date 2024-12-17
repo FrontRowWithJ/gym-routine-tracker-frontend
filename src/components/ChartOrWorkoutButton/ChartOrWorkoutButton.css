@@ -1,0 +1,12 @@
+.toggle-chart-or-workout-button {
+  aspect-ratio: 1 / 1;
+  width: 3rem;
+  height: 3rem;
+  padding: 0;
+  background-color: transparent;
+
+  svg {
+    width: 50%;
+    height: 50%;
+  }
+}

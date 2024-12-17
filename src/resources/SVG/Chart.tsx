@@ -1,0 +1,7 @@
+import { SVGProp } from "./SVGTypes";
+
+export const Chart = (props: SVGProp) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960">
+    <path d="M117-117v-83.77l86-86V-117h-86Zm160 0v-243.77l86-86V-117h-86Zm160 0v-330.77l86 88V-117h-86Zm160 0v-242.77l86-86V-117h-86Zm160 0v-403.77l86-86V-117h-86ZM117-320.23v-120.54l283-283 160 160 283-283v120.54l-283 283-160-160-283 283Z" />
+  </svg>
+);

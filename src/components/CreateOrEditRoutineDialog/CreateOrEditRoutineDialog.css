@@ -1,0 +1,13 @@
+.create-or-edit-routine-container {
+  position: relative;
+  padding: 1.5rem;
+  padding-bottom: 0rem;
+  display: flex;
+  flex-direction: column;
+  width: calc(100vw - 2rem);
+
+  .name-input {
+    grid-row: 2 / 3;
+    grid-column: 1 / 5;
+  }
+}

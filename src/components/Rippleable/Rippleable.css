@@ -1,0 +1,42 @@
+.ripple {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.ripple:hover::before {
+  background-color: #ede1d3;
+  opacity: 0.08;
+}
+
+.ripple::before,
+.ripple::after {
+  content: "";
+  opacity: 0;
+  position: absolute;
+}
+
+.ripple::before {
+  background-color: #ede1d3;
+  inset: 0;
+  transition: opacity 15ms linear, background-color 15ms linear;
+}
+
+.ripple::after {
+  background: radial-gradient(
+    closest-side,
+    #ede1d3 max(100% - 70px, 65%),
+    transparent 100%
+  );
+  aspect-ratio: 1 / 1;
+  transform-origin: center center;
+  inset: 50%;
+  translate: -50% -50%;
+}
+
+.ui-disabled.ripple:hover::before {
+  opacity: 0;
+}
