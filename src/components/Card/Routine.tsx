@@ -8,6 +8,7 @@ import { genIconProps } from "@/misc";
 export const Routine = (props: RoutineProps) => {
   const [openDialog, Dialog] = CreateOrEditRoutineDialog();
   const routineIconProps = genIconProps(props.routineData.routineName);
+  const workoutCount = props.routineData.workoutCount;
   return (
     <>
       <article className="routine" onClick={props.setPage}>
@@ -18,8 +19,7 @@ export const Routine = (props: RoutineProps) => {
         <RoutineIcon {...routineIconProps} />
         <article>
           <header>{props.routineData.routineName}</header>
-          {/* TODO Add workoutCount Label */}
-          {/* <h5>{`${workoutCount} Workout${workoutCount === 1 ? "" : "s"}`}</h5> */}
+          <h5>{`${workoutCount} Workout${workoutCount === 1 ? "" : "s"}`}</h5>
         </article>
       </article>
 

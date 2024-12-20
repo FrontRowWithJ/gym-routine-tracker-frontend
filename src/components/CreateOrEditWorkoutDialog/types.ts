@@ -1,13 +1,18 @@
-import { WorkoutData, StateToAction, WorkoutFetchFuncs } from "@/misc";
+import {
+  WorkoutData,
+  StateToAction,
+  WorkoutFetchFuncs,
+  StrictOmit,
+} from "@/misc";
 import { DialogProps } from "@/components/FormDialog";
 
 export type CreateOrEditWorkoutDialogProps = {
   resetValue: WorkoutData;
-  PUT: WorkoutFetchFuncs["PUT"];
-  POST: WorkoutFetchFuncs["POST"];
-  DELETE: WorkoutFetchFuncs["DELETE"];
-} & Omit<DialogProps, "reset" | "save" | "deleteAction">;
+  PUT: WorkoutFetchFuncs["putWorkout"];
+  POST: WorkoutFetchFuncs["postWorkout"];
+  DELETE: WorkoutFetchFuncs["deleteWorkout"];
+} & StrictOmit<DialogProps, "reset" | "save" | "deleteAction">;
 
-type Workout = Omit<WorkoutData, "routineID" | "workoutID">;
-
-export type Action = StateToAction<Workout>;
+export type Action = StateToAction<
+  StrictOmit<WorkoutData, "routineID" | "workoutID">
+>;

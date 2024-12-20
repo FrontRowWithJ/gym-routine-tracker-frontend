@@ -10,18 +10,19 @@ export const Workout = ({
   PUT,
   POST,
   DELETE,
+  debouncePUT,
   workoutData,
 }: WorkoutProps) => {
   const [openDialog, Dialog] = CreateOrEditWorkoutDialog();
 
   const src = getYoutubeThumbnail(workoutData.youtubeID);
-  const unit = workoutData.unit === "N/A" ? "" : workoutData.unit
+  const unit = workoutData.unit === "N/A" ? "" : workoutData.unit;
   return (
     <>
       <article className="workout">
         <section className="left">
           <picture onClick={enableVideo}>
-            {/* TODO default image when there is no source. */}
+            {/*// FIXME default image when there is no source. */}
             <source srcSet={src} type="image/jpeg" />
             <img src={src} alt="workout" />
           </picture>
@@ -32,7 +33,7 @@ export const Workout = ({
             <Button
               onClick={() => {
                 const newWeight = workoutData.weight + workoutData.increment;
-                PUT({ ...workoutData, weight: newWeight });
+                debouncePUT({ ...workoutData, weight: newWeight });
               }}
             >
               <Add />
@@ -44,7 +45,7 @@ export const Workout = ({
                   0,
                   workoutData.weight - workoutData.increment
                 );
-                PUT({ ...workoutData, weight: newWeight });
+                debouncePUT({ ...workoutData, weight: newWeight });
               }}
             >
               <Minus />

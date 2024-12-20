@@ -6,7 +6,12 @@ import { Apple, Google, Login } from "@/resources/SVG";
 import { Rippleable } from "../Rippleable";
 import { Divider } from "../Divider";
 import { useGoogleLogin } from "@react-oauth/google";
-import { generateNonce, ORIGIN, parseToken } from "@/misc";
+import {
+  generateNonce,
+  ORIGIN,
+  parseToken,
+} from "@/misc";
+import { fetchWrapper } from "@/misc/fetchHandler";
 
 export const LoginMenu = (props: LoginMenuProps) => {
   const loginButtonRef = useRef<HTMLButtonElement>(null);
@@ -21,7 +26,6 @@ export const LoginMenu = (props: LoginMenuProps) => {
       if (!isMenuButton && !isMenuItem) setIsMenuOpen(false);
     };
     window.addEventListener("click", onclick);
-
     return () => window.removeEventListener("click", onclick);
   }, []);
   const nonce = generateNonce();
@@ -32,35 +36,31 @@ export const LoginMenu = (props: LoginMenuProps) => {
 
     onSuccess: (tokenResponse) => {
       if (tokenResponse.state !== nonce) {
-        // TODO we have a problem
+        // TODO inform users that a deep tragedy has occured.
+      } else {
+        fetchWrapper(`${ORIGIN}/v1/auth/google`, {
+          method: "POST",
+          cache: "no-store",
+          body: tokenResponse.code,
+          priority: "high",
+          headers: { Accept: "text/plain" },
+        }).then(async ({ data: token, error }) => {
+          if (error !== null) {
+            // TODO handle error
+          } else {
+            try {
+              const payload = parseToken(token as string)["payload"];
+              localStorage.setItem("google-token", token as string);
+              props.setUserID(+payload.sub);
+            } catch (err) {
+              // TODO handle unauthorized error
+            }
+          }
+        });
       }
-      fetch(`${ORIGIN}/v1/auth/google`, {
-        method: "POST",
-        credentials: "include",
-        cache: "no-store",
-        integrity: "",
-        keepalive: false,
-        mode: "cors",
-        priority: "high",
-        redirect: "error",
-        referrer: window.location.href,
-        referrerPolicy: "no-referrer-when-downgrade",
-        signal: null,
-        window: null,
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "text/plain",
-        },
-        body: tokenResponse.code,
-      }).then(async (res) => {
-        const token = await res.text();
-        localStorage.setItem("google-token", token);
-        const payload = parseToken(token)["payload"];
-        props.setUserID(+payload.sub);
-      });
     },
     onError: () => {
-      console.log("Login Failed");
+      // TODO handle error
     },
   });
 
@@ -82,7 +82,6 @@ export const LoginMenu = (props: LoginMenuProps) => {
           <Button
             className="sign-in"
             onClick={() => {
-              //TODO Sign in with Google
               login();
             }}
           >
@@ -95,7 +94,7 @@ export const LoginMenu = (props: LoginMenuProps) => {
           <Button
             className="sign-in"
             onClick={() => {
-              //TODO Sign in with Apple
+              //FEATURE Sign in with Apple
             }}
           >
             <Apple />

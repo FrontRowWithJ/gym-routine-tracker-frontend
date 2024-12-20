@@ -9,8 +9,10 @@ import { useRoutines } from "@/misc/hooks";
 
 export const RoutinePage = (props: RoutinePageProps) => {
   const [openDialog, Dialog] = CreateOrEditRoutineDialog();
+  const [trigger, setTrigger] = useState<{}>({});
   const { routines, putRoutine, postRoutine, deleteRoutine } = useRoutines(
-    props.userID
+    props.userID,
+    trigger
   );
   const [routineID, setRoutineID] = useState<number>();
   // check logged in by using checking localstorage for google-token
@@ -22,7 +24,6 @@ export const RoutinePage = (props: RoutinePageProps) => {
             <Routine
               key={key}
               routineData={routineData}
-              // workoutCount={workoutCount}
               setPage={() => {
                 setRoutineID(routineData.routineID);
                 props.setPage("Workout");
@@ -41,7 +42,8 @@ export const RoutinePage = (props: RoutinePageProps) => {
               userID: -1,
               routineID: -1,
               routineName: "",
-              indexNumber: 2048,
+              indexNumber: 1024,
+              workoutCount: 0,
             }}
             PUT={putRoutine}
             POST={postRoutine}
@@ -54,6 +56,7 @@ export const RoutinePage = (props: RoutinePageProps) => {
             setPage={props.setPage}
             routineID={routineID}
             userID={props.userID}
+            setTrigger={setTrigger}
           />
         )
       )}

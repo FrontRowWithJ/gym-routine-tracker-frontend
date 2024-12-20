@@ -1,46 +1,33 @@
-import { RemoveOptional } from "./types";
+import { applyDefaultRequestInitParams } from ".";
+import { RemoveOptional, Replace } from "./types";
 
-type FetchError = "InvalidJSON" | "RequestFailed" | "Timeout" | "InvalidText";
-type responseType = "JSON" | "text" | "none";
-
-const applyDefaultRequestInitParams = (
-  requestInit: RemoveOptional<RequestInit, "method">
-): RequestInit => {
-  const token =
-    localStorage.getItem("google-token") ?? localStorage.getItem("apple-token");
-  return {
-    credentials: "include",
-    mode: "cors",
-    integrity: "",
-    keepalive: false,
-    cache: "default",
-    referrer: window.location.href,
-    referrerPolicy: "no-referrer-when-downgrade",
-    window: null,
-    redirect: "error",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    ...requestInit,
-  };
+type FetchError =
+  | "InvalidJSON"
+  | "RequestFailed"
+  | "Timeout"
+  | "InvalidText"
+  | "MissingAcceptType";
+type AcceptType = "application/x-empty" | "application/json" | "text/plain";
+const allowedAcceptTypes: { [key in AcceptType]: "" } = {
+  "application/json": "",
+  "application/x-empty": "",
+  "text/plain": "",
 };
-
-// TODO add telemetry
+// FEATURE add telemetry
 export const fetchWrapper = <T>(
   input: RequestInfo | URL,
   {
     retries = 3,
     retryBaseDelay = 1000,
-    responseType = "JSON",
     ...init
   }: {
     retries?: number;
     retryBaseDelay?: number;
-    responseType: responseType;
     signal?: AbortSignal | null;
-  } & RemoveOptional<RequestInit, "method">
+  } & Replace<
+    RemoveOptional<RequestInit, "method" | "headers">,
+    { headers: Record<string, string> }
+  >
 ): Promise<{ data: T; error: null } | { data: null; error: FetchError }> => {
   const execute = async (
     attempt: number
@@ -49,25 +36,35 @@ export const fetchWrapper = <T>(
       const controller = new AbortController();
       setTimeout(() => controller.abort(), 1000);
       init.signal?.addEventListener("abort", controller.abort);
+      const acceptType = init.headers["Accept"] as AcceptType;
+      if (!(acceptType in allowedAcceptTypes)) {
+        throw new Error("MissingAcceptType");
+      }
       const response = await fetch(input, applyDefaultRequestInitParams(init));
       if (!response.ok) {
         throw new Error(`Fetch error: HTTP error! Status:${response.status}`);
       }
       try {
-        if (responseType === "JSON")
+        if (acceptType === "application/json") {
           return { data: await response.json(), error: null };
-        if (responseType === "text")
+        } else if (acceptType === "text/plain") {
           return { data: (await response.text()) as T, error: null };
+        }
         return { data: "" as T, error: null };
       } catch (dataError) {
-        if (attempt < retries) throw dataError; // jump to retry
-        if (responseType === "JSON")
+        if (attempt < retries) {
+          throw dataError;
+        } // jump to retry
+        if (acceptType === "application/json") {
           return { data: null, error: "InvalidJSON" };
+        }
         return { data: null, error: "InvalidText" };
       }
     } catch (error) {
       if ((error as Error).name === "AbortError") {
         return { data: null, error: "Timeout" };
+      } else if ((error as Error).name === "MissingAcceptType") {
+        return { data: null, error: "MissingAcceptType" };
       } else if (attempt < retries) {
         const delayMs = retryBaseDelay * 2 ** attempt;
         return new Promise((resolve) =>
@@ -82,11 +79,13 @@ export const fetchWrapper = <T>(
 
 export const debounce = <F extends (...args: any) => any>(
   func: F,
-  timeout: number
+  timeout: number,
+  refresh?: F
 ): ((...args: Parameters<F>) => Promise<ReturnType<F>>) => {
   let timeoutID: number | undefined = undefined;
   return (...args) => {
     clearTimeout(timeoutID);
+    refresh?.(...args);
     return new Promise((resolve) => {
       timeoutID = +setTimeout(() => resolve(func(...args)), timeout);
     });

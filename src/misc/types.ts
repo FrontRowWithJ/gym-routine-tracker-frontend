@@ -18,6 +18,7 @@ export type RoutineData = {
   routineID: number;
   routineName: string;
   indexNumber: number;
+  workoutCount: number;
 };
 
 export type Theme = "dark" | "light";
@@ -36,7 +37,7 @@ export type StateToAction<T> =
   | { type: "reset"; value: FormState<T> };
 
 export type WorkoutDataCache = {
-  [routineID: string]: Omit<RoutineData, "routineID"> & {
+  [routineID: string]: StrictOmit<RoutineData, "routineID"> & {
     workouts: WorkoutData[];
   };
 };
@@ -63,14 +64,19 @@ export type RemoveOptional<T, K extends keyof T> = Prettify<
 >;
 export type Exact<A, B> = A extends B ? (B extends A ? A : never) : never;
 
-export type RoutineFetchFuncs = {
-  PUT: ReturnType<typeof useRoutines>["putRoutine"];
-  POST: ReturnType<typeof useRoutines>["postRoutine"];
-  DELETE: ReturnType<typeof useRoutines>["deleteRoutine"];
-};
+export type RoutineFetchFuncs = StrictOmit<
+  ReturnType<typeof useRoutines>,
+  "routines"
+>;
 
-export type WorkoutFetchFuncs = {
-  PUT: ReturnType<typeof useWorkouts>["putWorkout"];
-  POST: ReturnType<typeof useWorkouts>["postWorkout"];
-  DELETE: ReturnType<typeof useWorkouts>["deleteWorkout"];
-};
+export type WorkoutFetchFuncs = StrictOmit<
+  ReturnType<typeof useWorkouts>,
+  "workouts"
+>;
+
+export type StrictOmit<T, K extends keyof T> = Omit<T, K>;
+
+export type Replace<O, N extends { [key in keyof O]?: any }> = Prettify<{
+  [key in keyof O]: key extends keyof N ? N[key] : O[key];
+}>;
+

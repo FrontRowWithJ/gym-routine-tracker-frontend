@@ -25,10 +25,13 @@ const RESET_VALUE: WorkoutData = {
 
 export const WorkoutPage = (props: WorkoutPageProps) => {
   const [openDialog, Dialog] = CreateOrEditWorkoutDialog();
-  const { workouts, putWorkout, postWorkout, deleteWorkout } = useWorkouts(
-    props.userID,
-    props.routineID
-  );
+  const {
+    workouts,
+    putWorkout,
+    postWorkout,
+    deleteWorkout,
+    debouncePutWorkout,
+  } = useWorkouts(props.userID, props.routineID, props.setTrigger);
   const [videoID, setVideoID] = useState("");
   const disableVideo = () => setVideoID("");
   return (
@@ -47,6 +50,7 @@ export const WorkoutPage = (props: WorkoutPageProps) => {
             PUT={putWorkout}
             POST={postWorkout}
             DELETE={deleteWorkout}
+            debouncePUT={debouncePutWorkout}
           />
           <Divider width="90%" margin="0.5rem" />
         </Fragment>

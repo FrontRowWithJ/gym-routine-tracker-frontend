@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   getTheme,
   getWorkoutsLS,
@@ -14,9 +14,9 @@ import {
 } from "./util";
 import {
   Exact,
-  JWTPayload,
   Prettify,
   RoutineData,
+  StrictOmit,
   Theme,
   WorkoutData,
 } from "./types";
@@ -52,7 +52,11 @@ export const useTheme = () => {
   return [theme, setTheme] as const;
 };
 
-export const useWorkouts = (userID: number, routineID: number) => {
+export const useWorkouts = (
+  userID: number,
+  routineID: number,
+  setTrigger: React.Dispatch<React.SetStateAction<{}>>
+) => {
   const [workouts, setWorkouts] = useState(getWorkoutsLS(routineID));
   useEffect(() => {
     if (isUserLoggedIn(userID)) {
@@ -60,8 +64,10 @@ export const useWorkouts = (userID: number, routineID: number) => {
         `${ORIGIN}/v1/users/${userID}/routines/${routineID}/workouts`,
         {
           retries: 3,
-          responseType: "JSON",
           method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
         }
       ).then(({ data: workouts, error }) => {
         if (error !== null) {
@@ -74,27 +80,34 @@ export const useWorkouts = (userID: number, routineID: number) => {
     }
   }, [userID, routineID]);
 
-  const postWorkout = async (
-    workout: Prettify<
-      Omit<WorkoutData, "workoutID" | "routineID" | "indexNumber">
+  const postWorkout = <T>(
+    workout: Exact<
+      T,
+      Prettify<
+        StrictOmit<WorkoutData, "workoutID" | "routineID" | "indexNumber">
+      >
     >
   ) => {
     if (isUserLoggedIn(userID)) {
-      const { data, error } = await fetchWrapper<WorkoutData>(
+      fetchWrapper<WorkoutData>(
         `${ORIGIN}/v1/users/${userID}/routines/${routineID}/workouts`,
         {
           retries: 3,
-          responseType: "JSON",
           method: "POST",
           body: JSON.stringify(workout),
+          headers: {
+            Accept: "application/json",
+          },
         }
-      );
-      if (error !== null) {
-        // TODO handle error
-      } else {
-        setWorkoutLS(data);
-        setWorkouts((workouts) => [...workouts, data]);
-      }
+      ).then(({ data, error }) => {
+        if (error === null) {
+          setWorkoutLS(data);
+          setWorkouts((workouts) => [...workouts, data]);
+          setTrigger({});
+        } else {
+          // TODO handle error
+        }
+      });
     } else {
       const workoutID = Math.max(...workouts.map((w) => w.routineID)) + 1;
       let indexNumber = Math.max(...workouts.map((w) => w.indexNumber));
@@ -102,85 +115,99 @@ export const useWorkouts = (userID: number, routineID: number) => {
       const newWorkout = { ...workout, indexNumber, routineID, workoutID };
       setWorkoutLS(newWorkout);
       setWorkouts((workouts) => [...workouts, newWorkout]);
+      setTrigger({});
     }
   };
 
-  const putWorkout = async (workout: WorkoutData) => {
-    const { routineID, workoutID, ...body } = workout;
+  const updateLocalAfterPut = <T>(workout: Exact<T, WorkoutData>) => {
+    setWorkoutLS(workout);
+    setWorkouts((workouts) => {
+      const index = workouts.findIndex(
+        ({ workoutID }) => workoutID === workout.workoutID
+      );
+      const start = workouts.slice(0, index);
+      const end = workouts.slice(index + 1);
+      return [...start, workout, ...end];
+    });
+  };
+
+  const putWorkout = <T>(workout: Exact<T, WorkoutData>) => {
+    const { routineID, workoutID, indexNumber, ...body } = workout;
     if (isUserLoggedIn(userID)) {
-      const { error } = await fetchWrapper(
+      fetchWrapper(
         `${ORIGIN}/v1/users/${userID}/routines/${routineID}/workouts/${workoutID}`,
         {
           retries: 3,
-          responseType: "none",
           method: "PUT",
           body: JSON.stringify(body),
+          headers: {
+            Accept: "application/x-empty",
+          },
         }
-      );
-      if (error !== null) {
-        // TODO handle error
-      } else {
-        setWorkoutLS(workout);
-        setWorkouts((workouts) => {
-          const index = workouts.findIndex(
-            ({ workoutID }) => workoutID === workout.workoutID
-          );
-          const start = workouts.slice(0, index);
-          const end = workouts.slice(index + 1);
-          return [...start, workout, ...end];
-        });
-      }
-    } else {
-      setWorkoutLS(workout);
-      setWorkouts((workouts) => {
-        const index = workouts.findIndex(
-          ({ workoutID }) => workoutID === workout.workoutID
-        );
-        const start = workouts.slice(0, index);
-        const end = workouts.slice(index + 1);
-        return [...start, workout, ...end];
+      ).then(({ error }) => {
+        if (error !== null) updateLocalAfterPut(workout);
+        else {
+          // TODO handle error
+        }
       });
+    } else {
+      updateLocalAfterPut(workout);
     }
   };
 
-  const deleteWorkout = async (workout: WorkoutData) => {
+  const updateLocalAfterDelete = <T>(workout: Exact<T, WorkoutData>) => {
+    deleteWorkoutLS(workout);
+    setWorkouts((workouts) => {
+      return workouts.filter(
+        ({ workoutID }) => workoutID !== workout.workoutID
+      );
+    });
+  };
+
+  const deleteWorkout = async <T>(workout: Exact<T, WorkoutData>) => {
     const { routineID, workoutID } = workout;
     if (isUserLoggedIn(userID)) {
-      const { error } = await fetchWrapper(
+      fetchWrapper(
         `${ORIGIN}/v1/users/${userID}/routines/${routineID}/workouts/${workoutID}`,
         {
           retries: 3,
-          responseType: "none",
+          headers: {
+            Accept: "application/x-empty",
+          },
           method: "DELETE",
         }
-      );
-      if (error !== null) {
-        // TODO handle error
-      } else {
-        deleteWorkoutLS(workout);
-        setWorkouts((workouts) => {
-          return workouts.filter(
-            ({ workoutID }) => workoutID !== workout.workoutID
-          );
-        });
-      }
+      ).then(({ error }) => {
+        if (error === null) {
+          updateLocalAfterDelete(workout);
+        } else {
+          // TODO handle error
+        }
+      });
+    } else {
+      updateLocalAfterDelete(workout);
     }
   };
   return {
     workouts,
-    putWorkout: debounce(putWorkout, 500),
+    putWorkout,
     postWorkout,
     deleteWorkout,
+    debouncePutWorkout: useCallback(
+      debounce(putWorkout, 500, updateLocalAfterPut),
+      [userID]
+    ),
   };
 };
 
-export const useRoutines = (userID: number) => {
+export const useRoutines = (userID: number, trigger: {}) => {
   const [routines, setRoutines] = useState(getRoutinesLS());
   useEffect(() => {
     if (isUserLoggedIn(userID)) {
       fetchWrapper<RoutineData[]>(`${ORIGIN}/v1/users/${userID}/routines`, {
         retries: 3,
-        responseType: "JSON",
+        headers: {
+          Accept: "application/json",
+        },
         method: "GET",
       }).then(({ data, error }) => {
         if (error !== null) {
@@ -191,109 +218,115 @@ export const useRoutines = (userID: number) => {
         }
       });
     }
-  }, [userID]);
+  }, [userID, trigger]);
 
-  const postRoutine = async (
-    routine: Prettify<Omit<RoutineData, "routineID" | "userID" | "indexNumber">>
+  const postRoutine = <T>(
+    routine: Exact<
+      T,
+      Prettify<
+        StrictOmit<
+          RoutineData,
+          "routineID" | "userID" | "indexNumber" | "workoutCount"
+        >
+      >
+    >
   ) => {
     if (isUserLoggedIn(userID)) {
-      const { data, error } = await fetchWrapper<RoutineData>(
-        `${ORIGIN}/v1/users/${userID}/routines`,
-        {
-          retries: 3,
-          responseType: "JSON",
-          method: "POST",
-          body: JSON.stringify(routine),
+      fetchWrapper<RoutineData>(`${ORIGIN}/v1/users/${userID}/routines`, {
+        retries: 3,
+        headers: {
+          Accept: "application/json",
+        },
+        method: "POST",
+        body: JSON.stringify(routine),
+      }).then(({ data, error }) => {
+        if (error === null) {
+          setRoutineLS(data);
+          setRoutines((routines) => [...routines, data]);
+        } else {
+          // TODO handle error
         }
-      );
-      if (error !== null) {
-        // TODO handle error
-      } else {
-        setRoutineLS(data);
-        setRoutines((routines) => [...routines, data]);
-      }
+      });
     } else {
       const routineID = Math.max(...routines.map((r) => r.routineID)) + 1;
       let indexNumber = Math.max(...routines.map((r) => r.indexNumber));
       indexNumber = ((indexNumber / 1024) | 0) * 1024 + 1024;
-      const newRoutine = { ...routine, indexNumber, routineID, userID };
+      const newRoutine = {
+        ...routine,
+        indexNumber,
+        routineID,
+        userID,
+        workoutCount: 0,
+      };
       setRoutineLS(newRoutine);
       setRoutines((routines) => [...routines, newRoutine]);
     }
   };
 
-  const putRoutine = async (routine: RoutineData) => {
+  const updateLocalAfterPut = <T>(routine: Exact<T, RoutineData>) => {
+    setRoutineLS(routine);
+    setRoutines((routines) => {
+      const index = routines.findIndex(
+        ({ routineID }) => routineID === routine.routineID
+      );
+      const start = routines.slice(0, index);
+      const end = routines.slice(index + 1);
+      return [...start, routine, ...end];
+    });
+  };
+
+  const putRoutine = <T>(routine: Exact<T, RoutineData>) => {
     const { routineID, routineName } = routine;
     if (isUserLoggedIn(userID)) {
-      const { error } = await fetchWrapper(
-        `${ORIGIN}/v1/users/${userID}/routines/${routineID}`,
-        {
-          method: "PUT",
-          body: JSON.stringify({ routineName }),
-          retries: 3,
-          responseType: "none",
+      fetchWrapper(`${ORIGIN}/v1/users/${userID}/routines/${routineID}`, {
+        method: "PUT",
+        body: JSON.stringify({ routineName }),
+        retries: 3,
+        headers: {
+          Accept: "application/x-empty",
+        },
+      }).then(({ error }) => {
+        if (error === null) updateLocalAfterPut(routine);
+        else {
+          // TODO handle error
         }
-      );
-      if (error !== null) {
-        // TODO handle error
-      } else {
-        setRoutineLS(routine);
-        setRoutines((routines) => {
-          const index = routines.findIndex(
-            ({ routineID }) => routineID === routine.routineID
-          );
-          const start = routines.slice(0, index);
-          const end = routines.slice(index + 1);
-          return [...start, routine, ...end];
-        });
-      }
-    } else {
-      setRoutineLS(routine);
-      setRoutines((routines) => {
-        const index = routines.findIndex(
-          ({ routineID }) => routineID === routine.routineID
-        );
-        const start = routines.slice(0, index);
-        const end = routines.slice(index + 1);
-        return [...start, routine, ...end];
       });
+    } else {
+      updateLocalAfterPut(routine);
     }
   };
 
-  const deleteRoutine = async (routine: RoutineData) => {
+  const updateLocalAfterDelete = <T>(routine: Exact<T, RoutineData>) => {
+    deleteRoutineLS(routine);
+    setRoutines((routines) => {
+      return routines.filter(
+        ({ routineID }) => routineID !== routine.routineID
+      );
+    });
+  };
+
+  const deleteRoutine = <T>(routine: Exact<T, RoutineData>) => {
     const { userID, routineID } = routine;
     if (isUserLoggedIn(userID)) {
-      const { error } = await fetchWrapper(
-        `${ORIGIN}/v1/users/${userID}/routines/${routineID}`,
-        {
-          method: "DELETE",
-          retries: 3,
-          responseType: "none",
+      fetchWrapper(`${ORIGIN}/v1/users/${userID}/routines/${routineID}`, {
+        method: "DELETE",
+        retries: 3,
+        headers: { Accept: "application/x-empty" },
+      }).then(({ error }) => {
+        if (error === null) {
+          updateLocalAfterDelete(routine);
+        } else {
+          // TODO handle error
         }
-      );
-      if (error !== null) {
-        // TODO handle error
-      } else {
-        deleteRoutineLS(routine);
-        setRoutines((routines) => {
-          return routines.filter(
-            ({ routineID }) => routineID !== routine.routineID
-          );
-        });
-      }
-    } else {
-      deleteRoutineLS(routine);
-      setRoutines((routines) => {
-        return routines.filter(
-          ({ routineID }) => routineID !== routine.routineID
-        );
       });
+    } else {
+      updateLocalAfterDelete(routine);
     }
   };
 
   return {
     routines,
-    putRoutine: debounce(putRoutine, 500),
+    putRoutine,
     postRoutine,
     deleteRoutine,
   };

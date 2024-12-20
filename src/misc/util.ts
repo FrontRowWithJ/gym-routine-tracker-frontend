@@ -7,8 +7,8 @@ import {
   WorkoutData,
   JWTPayload,
   JWTHeader,
+  RemoveOptional,
 } from "./types";
-import md5 from "md5";
 import jsSHA from "jssha";
 import { OFFLINE_USER_ID } from "./constants";
 
@@ -46,23 +46,6 @@ export const validateName = (value: string): string =>
 export const validateYoutubeLink = (value: string): string =>
   /^[\w-]{11}$|^$/.test(value) ? "" : "Please enter a valid video id.";
 
-const genIconProps0 = (value: string): RoutineIconProps => {
-  // convert value into a 128bit hash into parameters for the routine icon.
-  /* |byte 0-2|byte 3-5|byte 6-8|byte 9-11|byte 12-13|byte 14-15| */
-  /* |color0  |color1  |color2  |fill     |rotate    |remainder |*/
-
-  const shaObj = new jsSHA("SHA-1", "TEXT", {
-    hmacKey: { value, format: "TEXT" },
-  });
-  const hash = shaObj.getHash("HEX", { outputLen: 128 });
-
-  const stopColor0 = "#" + hash.substring(0, 6);
-  const stopColor1 = "#" + hash.substring(6, 12);
-  const stopColor2 = "#" + hash.substring(12, 18);
-  const fill = "#" + hash.substring(18, 24);
-  const angle = parseInt(hash.substring(24, 28), 16) % 360;
-  return { stopColor0, stopColor1, stopColor2, fill, angle, hash };
-};
 const orders = [
   [0, 1, 2],
   [0, 2, 1],
@@ -79,18 +62,6 @@ const byteToOrder = (byte: number) => {
 
 const shuffle = (bytes: Uint8Array, order: number[]) => {
   return [bytes[order[0]], bytes[order[1]], bytes[order[2]]];
-};
-
-const byteToHex = (byte: number) => byte.toString(16).padStart(2, "0");
-
-const getColor = (color: Uint8Array, byte: number): string => {
-  const order = byteToOrder(byte);
-  const shuffledColor = shuffle(color, order);
-  const h = ((shuffledColor[0] / 256) * 360) | 0;
-  const s = `${((shuffledColor[1] / 256) * 100) | 0}`;
-  const l = `${((shuffledColor[2] / 256) * 100) | 0}`;
-  // return `hsl(${h}, ${s}%, ${l}%)`;
-  return "#" + shuffledColor.map(byteToHex).join("");
 };
 
 /**
@@ -143,7 +114,7 @@ const getColors = (color: Uint8Array, byte: number) => {
 };
 
 // const shaObj = new jsSHA("SHA3-512", "TEXT");
-const genIconProps1 = (value: string): RoutineIconProps => {
+export const genIconProps = (value: string): RoutineIconProps => {
   // shaObj.update(value)
   const shaObj = new jsSHA("SHA-224", "TEXT", {
     hmacKey: { value, format: "TEXT" },
@@ -154,10 +125,6 @@ const genIconProps1 = (value: string): RoutineIconProps => {
   // const hash = genRandomUintArray(20);
   const byte0 = (hash[12] << 8) | hash[13];
   const angle = (((byte0 >>> 7) / 512) * 360) | 0;
-  const stopColor0 = getColor(hash.subarray(0, 3), hash[14]);
-  const stopColor1 = getColor(hash.subarray(3, 6), hash[15]);
-  const stopColor2 = getColor(hash.subarray(6, 9), hash[16]);
-  const fill = getColor(hash.subarray(9, 12), hash[17]);
   // return { stopColor0, stopColor1, stopColor2, fill, angle, hash: hashString };
   return {
     ...getColors(hash.subarray(0, 6), hash[14]),
@@ -166,9 +133,7 @@ const genIconProps1 = (value: string): RoutineIconProps => {
   };
 };
 
-export const genIconProps = false ? genIconProps0 : genIconProps1;
-
-const getCache = () => {
+export const getCache = () => {
   const cache = localStorage.getItem("cache");
   if (cache === null) {
     localStorage.setItem("cache", "{}");
@@ -180,26 +145,19 @@ const getCache = () => {
 export const getRoutinesLS = () => {
   const cache = getCache();
   const routines: RoutineData[] = Object.keys(cache).map((routineID) => {
-    const { userID, routineName, indexNumber } = cache[routineID];
-    return { routineID: +routineID, userID, routineName, indexNumber };
+    const { workouts, ...rest } = cache[routineID];
+    return { ...rest, routineID: +routineID };
   });
   routines.sort((a, b) => a.indexNumber - b.indexNumber);
   return routines;
 };
 
-export const setRoutineLS = ({
-  routineID,
-  routineName,
-  userID,
-  indexNumber,
-}: RoutineData) => {
+export const setRoutineLS = ({ routineID, ...rest }: RoutineData) => {
   const cache = getCache();
   if (routineID in cache) {
-    cache[routineID].routineName = routineName;
-    cache[routineID].userID = userID;
-    cache[routineID].indexNumber = indexNumber;
+    cache[routineID] = { ...cache[routineID], ...rest };
   } else {
-    cache[routineID] = { routineName, userID, indexNumber, workouts: [] };
+    cache[routineID] = { ...rest, workouts: [] };
   }
   localStorage.setItem("cache", JSON.stringify(cache));
 };
@@ -208,13 +166,9 @@ export const setRoutinesLS = (routines: RoutineData[]) => {
   const cache = getCache();
   const newCache: WorkoutDataCache = {};
   for (const routine of routines) {
-    const { routineID, userID, routineName, indexNumber } = routine;
-    newCache[routineID] = {
-      routineName,
-      indexNumber,
-      userID,
-      workouts: routineID in cache ? cache[routineID].workouts : [],
-    };
+    const { routineID } = routine;
+    const workouts = cache?.[routineID]?.workouts ?? [];
+    newCache[routineID] = { ...routine, workouts };
   }
   localStorage.setItem("cache", JSON.stringify(newCache));
 };
@@ -238,8 +192,10 @@ export const setWorkoutLS = (workoutData: WorkoutData) => {
   const index = workouts.findIndex(
     (workout) => workout.workoutID === workoutData.workoutID
   );
-  if (index === -1) workouts.push(workoutData);
-  else workouts[index] = workoutData;
+  if (index === -1) {
+    cache[workoutData.routineID].workoutCount++;
+    workouts.push(workoutData);
+  } else workouts[index] = workoutData;
   localStorage.setItem("cache", JSON.stringify(cache));
 };
 
@@ -256,6 +212,7 @@ export const setWorkoutsLS = (workouts: WorkoutData[]) => {
 export const deleteWorkoutLS = (workoutData: WorkoutData) => {
   const cache = getCache();
   const { workouts } = cache[workoutData.routineID];
+  cache[workoutData.routineID].workoutCount--;
   cache[workoutData.routineID].workouts = workouts.filter(
     (workout) => workout.workoutID !== workoutData.workoutID
   );
@@ -264,7 +221,6 @@ export const deleteWorkoutLS = (workoutData: WorkoutData) => {
 
 export const generateNonce = () => {
   const randomValues = crypto.getRandomValues(new Uint32Array(4));
-
   // Encode as UTF-8
   const utf8Encoder = new TextEncoder();
   const utf8Array = utf8Encoder.encode(
@@ -281,10 +237,42 @@ export const generateNonce = () => {
 export const isUserLoggedIn = (userID: number) => userID !== OFFLINE_USER_ID;
 
 export const parseToken = (token: string) => {
-  const [header, payload, signature] = token.split(".");
+  const parts = token.split(".");
+  if (parts.length !== 3) throw new Error("Invalid token");
+  const [header, payload, signature] = parts;
+  try {
+    return {
+      header: JSON.parse(window.atob(header)) as JWTHeader,
+      payload: JSON.parse(window.atob(payload)) as JWTPayload,
+      signature,
+    };
+  } catch (err) {
+    throw new Error("Invalid token");
+  }
+};
+
+export const applyDefaultRequestInitParams = (
+  requestInit: RemoveOptional<RequestInit, "method">
+): RequestInit => {
+  const token =
+    localStorage.getItem("google-token") ?? localStorage.getItem("apple-token");
+  const { headers, ...rest } = requestInit;
   return {
-    header: JSON.parse(window.atob(header)) as JWTHeader,
-    payload: JSON.parse(window.atob(payload)) as JWTPayload,
-    signature,
+    credentials: "include",
+    mode: "cors",
+    integrity: "",
+    keepalive: false,
+    cache: "default",
+    referrer: window.location.href,
+    referrerPolicy: "no-referrer-when-downgrade",
+    window: null,
+    redirect: "error",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+      ...headers,
+    },
+    ...rest,
   };
 };

@@ -30,6 +30,7 @@ const toRoutineData = (state: FormState<RoutineData>): RoutineData => {
     userID: state.userID.value,
     routineID: state.routineID.value,
     indexNumber: state.indexNumber.value,
+    workoutCount: state.workoutCount.value,
   };
 };
 
