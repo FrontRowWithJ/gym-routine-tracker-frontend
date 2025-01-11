@@ -14,18 +14,21 @@ export const Workout = ({
   workoutData,
 }: WorkoutProps) => {
   const [openDialog, Dialog] = CreateOrEditWorkoutDialog();
-
   const src = getYoutubeThumbnail(workoutData.youtubeID);
   const unit = workoutData.unit === "N/A" ? "" : workoutData.unit;
   return (
     <>
       <article className="workout">
         <section className="left">
-          <picture onClick={enableVideo}>
-            {/*// FIXME default image when there is no source. */}
-            <source srcSet={src} type="image/jpeg" />
-            <img src={src} alt="workout" />
-          </picture>
+          <div className="foo"></div>
+          {src && (
+            <>
+              <picture onClick={enableVideo}>
+                <source srcSet={src} type="image/jpeg" />
+                <img src={src} alt="workout" />
+              </picture>
+            </>
+          )}
         </section>
         <section className="middle">
           <span className="workout-name">{workoutData.workoutName}</span>

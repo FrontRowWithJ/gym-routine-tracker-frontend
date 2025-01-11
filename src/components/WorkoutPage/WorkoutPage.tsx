@@ -5,23 +5,9 @@ import { Divider } from "../Divider";
 import { CreateButton } from "../CreateButton";
 import { CreateOrEditWorkoutDialog } from "../CreateOrEditWorkoutDialog";
 import { useState } from "react";
-import { WorkoutData } from "@/misc";
 import { YoutubeVideoPlayer } from "@/components/YoutubeVideoPlayer";
 import { Fragment } from "react";
 import { useWorkouts } from "@/misc/hooks";
-
-const RESET_VALUE: WorkoutData = {
-  workoutName: "",
-  repCount: 1,
-  setCount: 1,
-  youtubeID: "",
-  unit: "N/A",
-  increment: 0,
-  weight: 0,
-  routineID: 0,
-  workoutID: 0,
-  indexNumber: 0,
-};
 
 export const WorkoutPage = (props: WorkoutPageProps) => {
   const [openDialog, Dialog] = CreateOrEditWorkoutDialog();
@@ -61,7 +47,18 @@ export const WorkoutPage = (props: WorkoutPageProps) => {
         label="Create"
         backgroundColor="#39304a"
         width="calc(100% - 2rem)"
-        resetValue={RESET_VALUE}
+        resetValue={{
+          workoutName: "",
+          repCount: 1,
+          setCount: 1,
+          unit: "N/A",
+          indexNumber: 0,
+          weight: 0,
+          increment: 0,
+          youtubeID: "",
+          workoutID: -1,
+          routineID: props.routineID,
+        }}
         PUT={putWorkout}
         POST={postWorkout}
         DELETE={deleteWorkout}

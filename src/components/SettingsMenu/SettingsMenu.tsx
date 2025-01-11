@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { Divider } from "../Divider";
 import { useTheme } from "@/misc/hooks";
 import { ConfirmDeleteDialog } from "../ConfirmDeleteDialog";
-import { ORIGIN } from "@/misc";
+import { getJWT, ORIGIN } from "@/misc";
 
 export const SettingsMenu = (props: SettingsMenuProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -77,9 +77,7 @@ export const SettingsMenu = (props: SettingsMenuProps) => {
         title={title}
         subtitle={subtitle}
         deleteAction={(event) => {
-          const token =
-            localStorage.getItem("google-token") ??
-            localStorage.getItem("apple-token");
+          const token = getJWT();
           if (props.isLoggedIn) {
             closeDialog(event);
             fetch(`${ORIGIN}/v1/users/${props.userID}`, {
@@ -101,7 +99,7 @@ export const SettingsMenu = (props: SettingsMenuProps) => {
                 window.location.href = window.location.origin;
               })
               .catch(() => {
-                // TODO do something when deleting account fails.
+                // TODO handle error [failed account deletion]
               });
           } else {
             closeDialog(event);

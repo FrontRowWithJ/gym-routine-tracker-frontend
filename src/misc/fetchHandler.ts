@@ -25,22 +25,26 @@ export const fetchWrapper = <T>(
     retryBaseDelay?: number;
     signal?: AbortSignal | null;
   } & Replace<
-    RemoveOptional<RequestInit, "method" | "headers">,
-    { headers: Record<string, string> }
+    RemoveOptional<RequestInit, "method">,
+    {
+      headers: Record<string, string>;
+      method: "DELETE" | "POST" | "PUT" | "GET" | "OPTIONS";
+    }
   >
 ): Promise<{ data: T; error: null } | { data: null; error: FetchError }> => {
   const execute = async (
     attempt: number
   ): Promise<{ data: T; error: null } | { data: null; error: FetchError }> => {
+    init = applyDefaultRequestInitParams(init) as typeof init;
     try {
       const controller = new AbortController();
       setTimeout(() => controller.abort(), 1000);
       init.signal?.addEventListener("abort", controller.abort);
-      const acceptType = init.headers["Accept"] as AcceptType;
+      const acceptType = init?.headers?.["Accept"] as AcceptType;
       if (!(acceptType in allowedAcceptTypes)) {
         throw new Error("MissingAcceptType");
       }
-      const response = await fetch(input, applyDefaultRequestInitParams(init));
+      const response = await fetch(input, init);
       if (!response.ok) {
         throw new Error(`Fetch error: HTTP error! Status:${response.status}`);
       }
@@ -63,7 +67,7 @@ export const fetchWrapper = <T>(
     } catch (error) {
       if ((error as Error).name === "AbortError") {
         return { data: null, error: "Timeout" };
-      } else if ((error as Error).name === "MissingAcceptType") {
+      } else if ((error as Error).message === "MissingAcceptType") {
         return { data: null, error: "MissingAcceptType" };
       } else if (attempt < retries) {
         const delayMs = retryBaseDelay * 2 ** attempt;

@@ -39,7 +39,7 @@ export const RoutinePage = (props: RoutinePageProps) => {
             label="Create"
             backgroundColor="brown"
             resetValue={{
-              userID: -1,
+              userID: props.userID,
               routineID: -1,
               routineName: "",
               indexNumber: 1024,

@@ -52,10 +52,10 @@ export const CreateOrEditRoutineDialog = () => {
         reset={() => dispatch({ type: "reset", value: defaultFormState })}
         onClose={() => dispatch({ type: "reset", value: defaultFormState })}
         save={() => {
-          const payload = toRoutineData(state);
-          const { routineName } = payload;
-          if (dialogProps.label === "Create") POST({ routineName });
-          else PUT(payload);
+          const routineData = toRoutineData(state);
+          if (dialogProps.label === "Create") {
+            POST(routineData);
+          } else PUT(routineData);
         }}
         deleteAction={() => DELETE(toRoutineData(state))}
       >
