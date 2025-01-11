@@ -44,20 +44,6 @@ export type WorkoutDataCache = {
 
 export type Action = "create" | "update" | "delete";
 
-export type JWTPayload = {
-  iss: string;
-  sub: string;
-  aud: string[];
-  exp: number;
-  nbf: number;
-  iat: number;
-};
-
-export type JWTHeader = {
-  alg: "HS256";
-  typ: "JWT";
-};
-
 export type Prettify<T> = { [K in keyof T]: T[K] } & {};
 export type RemoveOptional<T, K extends keyof T> = Prettify<
   { [P in K]-?: T[P] } & T
@@ -80,3 +66,49 @@ export type Replace<O, N extends { [key in keyof O]?: any }> = Prettify<{
   [key in keyof O]: key extends keyof N ? N[key] : O[key];
 }>;
 
+type JWT<H, P> = {
+  header: H;
+  payload: P;
+  signature: string;
+};
+
+type GoogleAuthJWTHeader = {
+  alg: "RS256";
+  kid: string;
+  typ: "JWT";
+};
+
+type GoogleAuthJWTPayload = {
+  aud: string;
+  azp: string;
+  email: string;
+  email_verified: boolean;
+  exp: number;
+  given_name: string;
+  iat: number;
+  iss: string;
+  jti: string;
+  name: string;
+  nbf: number;
+  nonce: string;
+  picture: string;
+  sub: string;
+};
+export type GoogleAuthJWT = JWT<GoogleAuthJWTHeader, GoogleAuthJWTPayload>;
+
+type GymRoutineJWTHeader = {
+  alg: "HS256";
+  typ: "JWT";
+};
+
+type GymRoutineJWTPayload = {
+  iss: string;
+  sub: string;
+  aud: string[];
+  exp: number;
+  nbf: number;
+  iat: number;
+  preferred_username: string;
+};
+
+export type GymRoutineJWT = JWT<GymRoutineJWTHeader, GymRoutineJWTPayload>;

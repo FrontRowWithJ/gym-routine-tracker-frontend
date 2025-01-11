@@ -5,8 +5,6 @@ import {
   WorkoutDataCache,
   RoutineData,
   WorkoutData,
-  JWTPayload,
-  JWTHeader,
   RemoveOptional,
 } from "./types";
 import jsSHA from "jssha";
@@ -96,13 +94,10 @@ const rgbToHsl = (r: number, g: number, b: number) => {
 
   return [(h * 360) | 0, Math.max(50, (s * 100) | 0), (l * 100) | 0];
 };
-
+// UPGRADE use a better image generator
 const getColors = (color: Uint8Array, byte: number) => {
   const order = byteToOrder(byte);
   const shuffledColor = shuffle(color, order);
-  // const h = ((shuffledColor[0] / 256) * 360) | 0;
-  // const s = `${((shuffledColor[1] / 256) * 100) | 0}`;
-  // const l = `${((shuffledColor[2] / 256) * 100) | 0}`;
   const [r, g, b] = shuffledColor;
   const [h, s, l] = rgbToHsl(r, g, b);
   return {
@@ -133,6 +128,7 @@ export const genIconProps = (value: string): RoutineIconProps => {
   };
 };
 
+// UPGRADE swap out localstorage for indexedDB
 export const getCache = () => {
   const cache = localStorage.getItem("cache");
   if (cache === null) {
@@ -219,8 +215,8 @@ export const deleteWorkoutLS = (workoutData: WorkoutData) => {
   localStorage.setItem("cache", JSON.stringify(cache));
 };
 
-export const generateNonce = () => {
-  const randomValues = crypto.getRandomValues(new Uint32Array(4));
+export const generateRandomString = (numOfBytes: number) => {
+  const randomValues = crypto.getRandomValues(new Uint8Array(numOfBytes));
   // Encode as UTF-8
   const utf8Encoder = new TextEncoder();
   const utf8Array = utf8Encoder.encode(
@@ -236,14 +232,22 @@ export const generateNonce = () => {
 // if the user is offline then the ID number should be -1
 export const isUserLoggedIn = (userID: number) => userID !== OFFLINE_USER_ID;
 
-export const parseToken = (token: string) => {
+export const parseJWT = <
+  const JWT extends {
+    header: Record<string, any>;
+    payload: Record<string, any>;
+    signature: string;
+  }
+>(
+  token: string
+): JWT => {
   const parts = token.split(".");
   if (parts.length !== 3) throw new Error("Invalid token");
   const [header, payload, signature] = parts;
   try {
-    return {
-      header: JSON.parse(window.atob(header)) as JWTHeader,
-      payload: JSON.parse(window.atob(payload)) as JWTPayload,
+    return <JWT>{
+      header: JSON.parse(window.atob(header)),
+      payload: JSON.parse(window.atob(payload)),
       signature,
     };
   } catch (err) {
@@ -270,9 +274,28 @@ export const applyDefaultRequestInitParams = (
     headers: {
       Accept: "application/json",
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
+      ...(token !== null && { Authorization: `Bearer ${token}` }),
       ...headers,
     },
     ...rest,
   };
+};
+
+export const loadScript = (src: string) => {
+  const script = document.createElement("script");
+  script.type = "text/javascript";
+  script.src = src;
+  script.async = true;
+  document.body.appendChild(script);
+  return script;
+};
+
+export const unloadScript = (script: HTMLScriptElement) => {
+  document.body.removeChild(script);
+};
+
+export const getJWT = () => {
+  return (
+    localStorage.getItem("apple-token") ?? localStorage.getItem("google-token")
+  );
 };
