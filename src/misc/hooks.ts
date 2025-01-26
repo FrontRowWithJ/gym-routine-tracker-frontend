@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   getTheme,
   getWorkoutsLS,
@@ -11,10 +11,9 @@ import {
   setRoutinesLS,
   isUserLoggedIn,
   parseJWT,
-  getJWT,
 } from "./util";
 import { GymRoutineJWT, RoutineData, Theme, WorkoutData } from "./types";
-import { MATCH_MEDIA_QUERY, OFFLINE_USER_ID, ORIGIN } from "./constants";
+import { DEFAULT_ERROR_MESSAGE, MATCH_MEDIA_QUERY, OFFLINE_USER_ID, ORIGIN } from "./constants";
 import { debounce, fetchWrapper } from "./fetchHandler";
 
 export const useTheme = () => {
@@ -49,7 +48,8 @@ export const useTheme = () => {
 const GET = <T>(
   URL: string,
   setLS: (data: T) => void,
-  setState: (value: React.SetStateAction<T>) => void
+  setState: (value: React.SetStateAction<T>) => void,
+  setErrorMessage: React.Dispatch<React.SetStateAction<string>>
 ) => {
   fetchWrapper<T>(URL, { method: "GET" }).then(({ data, error }) => {
     if (error === null) {
@@ -57,7 +57,7 @@ const GET = <T>(
       setState(data);
     } else {
       console.error(error);
-      //TODO handle error [failed GET request]
+      setErrorMessage(DEFAULT_ERROR_MESSAGE);
     }
   });
 };
@@ -69,7 +69,8 @@ const PUT = <T, S extends keyof T>(
   data: T,
   body: { [K in keyof T]?: T[K] },
   setStateLS: (data: T) => void,
-  setState: (value: React.SetStateAction<T[]>) => void
+  setState: (value: React.SetStateAction<T[]>) => void,
+  setErrorMessage: React.Dispatch<React.SetStateAction<string>>
 ) => {
   const updateLocalAfterPut = (data: T) => {
     setStateLS(data);
@@ -87,11 +88,11 @@ const PUT = <T, S extends keyof T>(
       body: JSON.stringify(body),
       headers: { Accept: "application/x-empty" },
     }).then(({ error }) => {
-      if (error !== null) {
+      if (error === null) {
         updateLocalAfterPut(data);
       } else {
         console.error(error);
-        // TODO handle error [failed PUT request]
+        setErrorMessage(DEFAULT_ERROR_MESSAGE);
       }
     });
   } else {
@@ -108,6 +109,7 @@ const POST = <T extends { indexNumber: number }, S extends keyof T>(
   records: T[],
   setStateLS: (data: T) => void,
   setState: (value: React.SetStateAction<T[]>) => void,
+  setErrorMessage: React.Dispatch<React.SetStateAction<string>>,
   trigger?: (obj: {}) => void
 ) => {
   if (isUserLoggedIn(userID)) {
@@ -119,7 +121,7 @@ const POST = <T extends { indexNumber: number }, S extends keyof T>(
           trigger?.({});
         } else {
           console.error(error);
-          // TODO handle error [failed POST request]
+          setErrorMessage(DEFAULT_ERROR_MESSAGE);
         }
       }
     );
@@ -146,7 +148,8 @@ const DELETE = <T, S extends keyof T>(
   idKey: S extends `${string}ID` ? S : never,
   data: T,
   deleteLS: (data: T) => void,
-  setState: (value: React.SetStateAction<T[]>) => void
+  setState: (value: React.SetStateAction<T[]>) => void,
+  setErrorMessage: React.Dispatch<React.SetStateAction<string>>
 ) => {
   const updateAfterDelete = (obj: T) => {
     deleteLS(obj);
@@ -163,7 +166,7 @@ const DELETE = <T, S extends keyof T>(
         updateAfterDelete(data);
       } else {
         console.error(error);
-        // TODO handle error [failed DELETE request]
+        setErrorMessage(DEFAULT_ERROR_MESSAGE);
       }
     });
   } else {
@@ -174,7 +177,8 @@ const DELETE = <T, S extends keyof T>(
 export const useWorkouts = (
   userID: number,
   routineID: number,
-  setTrigger: React.Dispatch<React.SetStateAction<{}>>
+  setTrigger: React.Dispatch<React.SetStateAction<{}>>,
+  setErrorMessage: React.Dispatch<React.SetStateAction<string>>
 ) => {
   const [workouts, setWorkouts] = useState(getWorkoutsLS(routineID));
   useEffect(() => {
@@ -182,10 +186,11 @@ export const useWorkouts = (
       GET(
         `${ORIGIN}/v1/users/${userID}/routines/${routineID}/workouts`,
         setWorkoutsLS,
-        setWorkouts
+        setWorkouts,
+        setErrorMessage
       );
     }
-  }, [userID, routineID]);
+  }, [userID, routineID, setErrorMessage]);
 
   const postWorkout = (workout: WorkoutData) => {
     const { workoutID, routineID, indexNumber, ...body } = workout;
@@ -198,6 +203,7 @@ export const useWorkouts = (
       workouts,
       setWorkoutLS,
       setWorkouts,
+      setErrorMessage,
       setTrigger
     );
   };
@@ -214,21 +220,26 @@ export const useWorkouts = (
     });
   };
 
-  const putWorkout = (workout: WorkoutData) => {
-    const { routineID, workoutID, indexNumber, ...body } = workout;
-    PUT(
-      `${ORIGIN}/v1/users/${userID}/routines/${routineID}/workouts/${workoutID}`,
-      userID,
-      "workoutID",
-      workout,
-      body,
-      setWorkoutLS,
-      setWorkouts
-    );
-  };
-  const debouncePutWorkout = useCallback(
-    debounce(putWorkout, 500, updateLocalAfterPut),
-    []
+  const putWorkout = useCallback(
+    (workout: WorkoutData) => {
+      const { routineID, workoutID, indexNumber, ...body } = workout;
+      PUT(
+        `${ORIGIN}/v1/users/${userID}/routines/${routineID}/workouts/${workoutID}`,
+        userID,
+        "workoutID",
+        workout,
+        body,
+        setWorkoutLS,
+        setWorkouts,
+        setErrorMessage
+      );
+    },
+    [userID, setErrorMessage]
+  );
+
+  const debouncePutWorkout = useMemo(
+    () => debounce(putWorkout, 500, updateLocalAfterPut),
+    [putWorkout]
   );
 
   const deleteWorkout = async (workout: WorkoutData) => {
@@ -239,7 +250,8 @@ export const useWorkouts = (
       "workoutID",
       workout,
       deleteWorkoutLS,
-      setWorkouts
+      setWorkouts,
+      setErrorMessage
     );
   };
   return {
@@ -251,13 +263,22 @@ export const useWorkouts = (
   };
 };
 
-export const useRoutines = (userID: number, trigger: {}) => {
+export const useRoutines = (
+  userID: number,
+  trigger: {},
+  setErrorMessage: React.Dispatch<React.SetStateAction<string>>
+) => {
   const [routines, setRoutines] = useState(getRoutinesLS());
   useEffect(() => {
     if (isUserLoggedIn(userID)) {
-      GET(`${ORIGIN}/v1/users/${userID}/routines`, setRoutinesLS, setRoutines);
+      GET(
+        `${ORIGIN}/v1/users/${userID}/routines`,
+        setRoutinesLS,
+        setRoutines,
+        setErrorMessage
+      );
     }
-  }, [userID, trigger]);
+  }, [userID, trigger, setErrorMessage]);
 
   const postRoutine = (routine: RoutineData) => {
     const { routineID, userID, indexNumber, workoutCount, ...body } = routine;
@@ -269,7 +290,8 @@ export const useRoutines = (userID: number, trigger: {}) => {
       routine,
       routines,
       setRoutineLS,
-      setRoutines
+      setRoutines,
+      setErrorMessage
     );
   };
 
@@ -282,7 +304,8 @@ export const useRoutines = (userID: number, trigger: {}) => {
       routine,
       body,
       setRoutineLS,
-      setRoutines
+      setRoutines,
+      setErrorMessage
     );
   };
 
@@ -294,7 +317,8 @@ export const useRoutines = (userID: number, trigger: {}) => {
       "routineID",
       routine,
       deleteRoutineLS,
-      setRoutines
+      setRoutines,
+      setErrorMessage
     );
   };
 
@@ -307,7 +331,7 @@ export const useRoutines = (userID: number, trigger: {}) => {
 };
 
 export const useUserState = () => {
-  const jwt = getJWT();
+  const jwt = localStorage.getItem("auth-token");
   let userID: number;
   if (jwt == null) {
     userID = OFFLINE_USER_ID;
@@ -328,4 +352,27 @@ export const useUserState = () => {
     }
   }
   return useState(userID);
+};
+
+export const useLoadScript = (src: string) => {
+  const [isScriptLoaded, setScriptState] = useState(false);
+
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = src;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      setScriptState(true);
+    };
+    script.onerror = () => {
+      setScriptState(false);
+    };
+    document.body.appendChild(script);
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, [src]);
+
+  return isScriptLoaded;
 };

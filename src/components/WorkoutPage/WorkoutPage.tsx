@@ -1,27 +1,34 @@
 import { Workout } from "@/components/Workout";
 import { WorkoutPageProps } from "./types";
 import "./WorkoutPage.css";
-import { Divider } from "../Divider";
-import { CreateButton } from "../CreateButton";
-import { CreateOrEditWorkoutDialog } from "../CreateOrEditWorkoutDialog";
+import { Divider } from "@/components/Divider";
+import { CreateButton } from "@/components/CreateButton";
+import { CreateOrEditWorkoutDialog } from "@/components/CreateOrEditWorkoutDialog";
 import { useState } from "react";
 import { YoutubeVideoPlayer } from "@/components/YoutubeVideoPlayer";
 import { Fragment } from "react";
 import { useWorkouts } from "@/misc/hooks";
+import { useErrorBanner } from "@/components/ErrorBanner";
 
-export const WorkoutPage = (props: WorkoutPageProps) => {
+export const WorkoutPage = ({
+  userID,
+  routineID,
+  setTrigger,
+}: WorkoutPageProps) => {
   const [openDialog, Dialog] = CreateOrEditWorkoutDialog();
+  const [ErrorBanner, setErrorMessage] = useErrorBanner();
   const {
     workouts,
     putWorkout,
     postWorkout,
     deleteWorkout,
     debouncePutWorkout,
-  } = useWorkouts(props.userID, props.routineID, props.setTrigger);
+  } = useWorkouts(userID, routineID, setTrigger, setErrorMessage);
   const [videoID, setVideoID] = useState("");
   const disableVideo = () => setVideoID("");
   return (
     <>
+      <ErrorBanner />
       {videoID && (
         <>
           <YoutubeVideoPlayer disableVideo={disableVideo} videoID={videoID} />
@@ -57,7 +64,7 @@ export const WorkoutPage = (props: WorkoutPageProps) => {
           increment: 0,
           youtubeID: "",
           workoutID: -1,
-          routineID: props.routineID,
+          routineID,
         }}
         PUT={putWorkout}
         POST={postWorkout}

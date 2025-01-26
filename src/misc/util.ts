@@ -245,11 +245,11 @@ export const parseJWT = <
   if (parts.length !== 3) throw new Error("Invalid token");
   const [header, payload, signature] = parts;
   try {
-    return <JWT>{
+    return {
       header: JSON.parse(window.atob(header)),
       payload: JSON.parse(window.atob(payload)),
       signature,
-    };
+    } as JWT;
   } catch (err) {
     throw new Error("Invalid token");
   }
@@ -258,8 +258,7 @@ export const parseJWT = <
 export const applyDefaultRequestInitParams = (
   requestInit: RemoveOptional<RequestInit, "method">
 ): RequestInit => {
-  const token =
-    localStorage.getItem("google-token") ?? localStorage.getItem("apple-token");
+  const token = localStorage.getItem("auth-token");
   const { headers, ...rest } = requestInit;
   return {
     credentials: "include",
@@ -279,23 +278,4 @@ export const applyDefaultRequestInitParams = (
     },
     ...rest,
   };
-};
-
-export const loadScript = (src: string) => {
-  const script = document.createElement("script");
-  script.type = "text/javascript";
-  script.src = src;
-  script.async = true;
-  document.body.appendChild(script);
-  return script;
-};
-
-export const unloadScript = (script: HTMLScriptElement) => {
-  document.body.removeChild(script);
-};
-
-export const getJWT = () => {
-  return (
-    localStorage.getItem("apple-token") ?? localStorage.getItem("google-token")
-  );
 };

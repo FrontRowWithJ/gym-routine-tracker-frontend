@@ -2,7 +2,7 @@ import { ButtonMenuProps } from "./types";
 import "./ButtonMenu.css";
 import { Button } from "@/components/Button";
 import React, { useEffect, useRef, useState } from "react";
-import { Divider } from "../Divider";
+import { Divider } from "@/components/Divider";
 
 export const ButtonMenu = (props: ButtonMenuProps) => {
   const toggleMenuRef = useRef<HTMLButtonElement>(null);
@@ -13,12 +13,12 @@ export const ButtonMenu = (props: ButtonMenuProps) => {
     const onclick = (event: MouseEvent) => {
       if (!buttonMenuRef.current || !toggleMenuRef.current) return;
       const isMenuItem = buttonMenuRef.current.contains(event.target as any);
-      const isMenuButton = toggleMenuRef.current == event.target;
+      const isMenuButton = toggleMenuRef.current === event.target;
       if (!isMenuButton && !isMenuItem) setIsMenuOpen(false);
     };
     window.addEventListener("click", onclick);
     return () => window.removeEventListener("click", onclick);
-  }, []);
+  }, [buttonMenuRef]);
 
   return (
     <div className="button-menu-container">

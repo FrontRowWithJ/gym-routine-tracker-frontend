@@ -3,7 +3,7 @@ import { WorkoutProps } from "./types";
 import "./Workout.css";
 import { Button } from "@/components/Button";
 import { getYoutubeThumbnail } from "@/misc";
-import { CreateOrEditWorkoutDialog } from "../CreateOrEditWorkoutDialog";
+import { CreateOrEditWorkoutDialog } from "@/components/CreateOrEditWorkoutDialog";
 
 export const Workout = ({
   enableVideo,

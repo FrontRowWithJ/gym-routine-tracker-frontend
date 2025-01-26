@@ -1,9 +1,9 @@
 import { RadioGroupProps } from "./types";
 import "./RadioGroup.css";
-import { Rippleable } from "../Rippleable";
+import { Rippleable } from "@/components/Rippleable";
 import { Fragment } from "react";
 import { NOOP } from "@/misc";
-import { Divider } from "../Divider";
+import { Divider } from "@/components/Divider";
 
 export function RadioGroup<const T extends string[]>({
   values,
