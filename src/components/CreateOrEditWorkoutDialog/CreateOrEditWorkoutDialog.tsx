@@ -85,8 +85,7 @@ export const CreateOrEditWorkoutDialog = () => {
         reset={() => dispatch({ type: "reset", value: defaultFormState })}
         save={() => {
           const workoutData = toWorkoutData(state);
-          const { routineID, workoutID, indexNumber, ...payload } = workoutData;
-          if (dialogProps.label === "Create") POST(payload);
+          if (dialogProps.label === "Create") POST(workoutData);
           else PUT(workoutData);
         }}
         deleteAction={() => DELETE(toWorkoutData(state))}

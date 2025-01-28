@@ -3,10 +3,12 @@ import "./SettingsMenu.css";
 import { Button } from "@/components/Button";
 import { Dark, Light, PermanentBin, Settings } from "@/resources/SVG";
 import { useEffect, useRef, useState } from "react";
-import { Divider } from "../Divider";
+import { Divider } from "@/components/Divider";
 import { useTheme } from "@/misc/hooks";
-import { ConfirmDeleteDialog } from "../ConfirmDeleteDialog";
-import { ORIGIN } from "@/misc";
+import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
+import { DEFAULT_ERROR_MESSAGE, ORIGIN } from "@/misc";
+import { useErrorBanner } from "@/components/ErrorBanner";
+import { fetchWrapper } from "@/misc/fetchHandler";
 
 export const SettingsMenu = (props: SettingsMenuProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -14,7 +16,7 @@ export const SettingsMenu = (props: SettingsMenuProps) => {
   const settingsButtonRef = useRef<HTMLButtonElement>(null);
   const settingsMenuRef = useRef<HTMLMenuElement>(null);
   const [openDialog, closeDialog, Dialog] = ConfirmDeleteDialog();
-
+  const [ErrorBanner, setErrorMessage] = useErrorBanner();
   const title = props.isLoggedIn
     ? "Permanently Delete Account?"
     : "Permanently Delete Data?";
@@ -36,6 +38,7 @@ export const SettingsMenu = (props: SettingsMenuProps) => {
 
   return (
     <>
+      <ErrorBanner />
       <div className="settings-menu-container">
         <Button
           className="settings-button"
@@ -77,11 +80,24 @@ export const SettingsMenu = (props: SettingsMenuProps) => {
         title={title}
         subtitle={subtitle}
         deleteAction={(event) => {
-          const token =
-            localStorage.getItem("google-token") ??
-            localStorage.getItem("apple-token");
+          const token = localStorage.getItem("auth-token");
           if (props.isLoggedIn) {
             closeDialog(event);
+            fetchWrapper(`${ORIGIN}/v1/users/${props.userID}`, {
+              method: "DELETE",
+              headers: {
+                Accept: "application/x-empty",
+                Authorization: `Bearer ${token}`,
+              },
+            }).then(({ error }) => {
+              if (error != null) {
+                console.error(error);
+                setErrorMessage(DEFAULT_ERROR_MESSAGE);
+              } else {
+                localStorage.clear();
+                window.location.href = window.location.origin;
+              }
+            });
             fetch(`${ORIGIN}/v1/users/${props.userID}`, {
               method: "DELETE",
               credentials: "omit",
@@ -100,8 +116,9 @@ export const SettingsMenu = (props: SettingsMenuProps) => {
                 localStorage.clear();
                 window.location.href = window.location.origin;
               })
-              .catch(() => {
-                // TODO do something when deleting account fails.
+              .catch((error) => {
+                console.error(error);
+                setErrorMessage("Server error. Try again later.");
               });
           } else {
             closeDialog(event);

@@ -1,14 +1,15 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
-import { GoogleOAuthProvider } from "@react-oauth/google";
 import { Main } from "@/components/Main";
+import { ScriptContextProvider } from "@/components/ScriptContextProvider";
 
 const root = ReactDOM.createRoot(document.getElementById("root")!);
+
 root.render(
-  <GoogleOAuthProvider clientId="967827539022-cnpgoc9l73kqe3106ko0m7tc7cgnq4rj.apps.googleusercontent.com">
-    <React.StrictMode>
+  <React.StrictMode>
+    <ScriptContextProvider src="https://accounts.google.com/gsi/client">
       <Main />
-    </React.StrictMode>
-  </GoogleOAuthProvider>
+    </ScriptContextProvider>
+  </React.StrictMode>
 );

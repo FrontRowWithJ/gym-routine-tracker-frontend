@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   getTheme,
   getWorkoutsLS,
@@ -10,17 +10,10 @@ import {
   deleteRoutineLS,
   setRoutinesLS,
   isUserLoggedIn,
-  parseToken,
+  parseJWT,
 } from "./util";
-import {
-  Exact,
-  Prettify,
-  RoutineData,
-  StrictOmit,
-  Theme,
-  WorkoutData,
-} from "./types";
-import { MATCH_MEDIA_QUERY, OFFLINE_USER_ID, ORIGIN } from "./constants";
+import { GymRoutineJWT, RoutineData, Theme, WorkoutData } from "./types";
+import { DEFAULT_ERROR_MESSAGE, MATCH_MEDIA_QUERY, OFFLINE_USER_ID, ORIGIN } from "./constants";
 import { debounce, fetchWrapper } from "./fetchHandler";
 
 export const useTheme = () => {
@@ -52,74 +45,170 @@ export const useTheme = () => {
   return [theme, setTheme] as const;
 };
 
+const GET = <T>(
+  URL: string,
+  setLS: (data: T) => void,
+  setState: (value: React.SetStateAction<T>) => void,
+  setErrorMessage: React.Dispatch<React.SetStateAction<string>>
+) => {
+  fetchWrapper<T>(URL, { method: "GET" }).then(({ data, error }) => {
+    if (error === null) {
+      setLS(data);
+      setState(data);
+    } else {
+      console.error(error);
+      setErrorMessage(DEFAULT_ERROR_MESSAGE);
+    }
+  });
+};
+
+const PUT = <T, S extends keyof T>(
+  URL: string,
+  userID: number,
+  idKey: S extends `${string}ID` ? S : never,
+  data: T,
+  body: { [K in keyof T]?: T[K] },
+  setStateLS: (data: T) => void,
+  setState: (value: React.SetStateAction<T[]>) => void,
+  setErrorMessage: React.Dispatch<React.SetStateAction<string>>
+) => {
+  const updateLocalAfterPut = (data: T) => {
+    setStateLS(data);
+    setState((stateList) => {
+      const index = stateList.findIndex((item) => item[idKey] === data[idKey]);
+      const start = stateList.slice(0, index);
+      const end = stateList.slice(index + 1);
+      return [...start, data, ...end];
+    });
+  };
+
+  if (isUserLoggedIn(userID)) {
+    fetchWrapper(URL, {
+      method: "PUT",
+      body: JSON.stringify(body),
+      headers: { Accept: "application/x-empty" },
+    }).then(({ error }) => {
+      if (error === null) {
+        updateLocalAfterPut(data);
+      } else {
+        console.error(error);
+        setErrorMessage(DEFAULT_ERROR_MESSAGE);
+      }
+    });
+  } else {
+    updateLocalAfterPut(data);
+  }
+};
+
+const POST = <T extends { indexNumber: number }, S extends keyof T>(
+  URL: string,
+  userID: number,
+  idKey: S extends `${string}ID` ? S : never,
+  body: { [K in keyof T]?: T[K] },
+  data: T,
+  records: T[],
+  setStateLS: (data: T) => void,
+  setState: (value: React.SetStateAction<T[]>) => void,
+  setErrorMessage: React.Dispatch<React.SetStateAction<string>>,
+  trigger?: (obj: {}) => void
+) => {
+  if (isUserLoggedIn(userID)) {
+    fetchWrapper<T>(URL, { method: "POST", body: JSON.stringify(body) }).then(
+      ({ data, error }) => {
+        if (error === null) {
+          setStateLS(data);
+          setState((stateList) => [...stateList, data]);
+          trigger?.({});
+        } else {
+          console.error(error);
+          setErrorMessage(DEFAULT_ERROR_MESSAGE);
+        }
+      }
+    );
+  } else {
+    const id =
+      records.length === 0
+        ? 0
+        : Math.max(...(records.map((d) => d[idKey]) as number[])) + 1;
+    let indexNumber =
+      records.length === 0
+        ? 1024
+        : Math.max(...records.map((d) => d.indexNumber));
+    indexNumber = ((indexNumber / 1024) | 0) * 1024 + 1024;
+    const newData = { ...data, indexNumber, [idKey]: id };
+    setStateLS(newData);
+    setState((stateList) => [...stateList, newData]);
+    trigger?.({});
+  }
+};
+
+const DELETE = <T, S extends keyof T>(
+  URL: string,
+  userID: number,
+  idKey: S extends `${string}ID` ? S : never,
+  data: T,
+  deleteLS: (data: T) => void,
+  setState: (value: React.SetStateAction<T[]>) => void,
+  setErrorMessage: React.Dispatch<React.SetStateAction<string>>
+) => {
+  const updateAfterDelete = (obj: T) => {
+    deleteLS(obj);
+    setState((stateList) => {
+      return stateList.filter((item) => item[idKey] !== obj[idKey]);
+    });
+  };
+  if (isUserLoggedIn(userID)) {
+    fetchWrapper(URL, {
+      method: "DELETE",
+      headers: { Accept: "application/x-empty" },
+    }).then(({ error }) => {
+      if (error === null) {
+        updateAfterDelete(data);
+      } else {
+        console.error(error);
+        setErrorMessage(DEFAULT_ERROR_MESSAGE);
+      }
+    });
+  } else {
+    updateAfterDelete(data);
+  }
+};
+
 export const useWorkouts = (
   userID: number,
   routineID: number,
-  setTrigger: React.Dispatch<React.SetStateAction<{}>>
+  setTrigger: React.Dispatch<React.SetStateAction<{}>>,
+  setErrorMessage: React.Dispatch<React.SetStateAction<string>>
 ) => {
   const [workouts, setWorkouts] = useState(getWorkoutsLS(routineID));
   useEffect(() => {
     if (isUserLoggedIn(userID)) {
-      fetchWrapper<WorkoutData[]>(
+      GET(
         `${ORIGIN}/v1/users/${userID}/routines/${routineID}/workouts`,
-        {
-          retries: 3,
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-          },
-        }
-      ).then(({ data: workouts, error }) => {
-        if (error !== null) {
-          // TODO handle error
-        } else {
-          setWorkoutsLS(workouts);
-          setWorkouts(workouts);
-        }
-      });
+        setWorkoutsLS,
+        setWorkouts,
+        setErrorMessage
+      );
     }
-  }, [userID, routineID]);
+  }, [userID, routineID, setErrorMessage]);
 
-  const postWorkout = <T>(
-    workout: Exact<
-      T,
-      Prettify<
-        StrictOmit<WorkoutData, "workoutID" | "routineID" | "indexNumber">
-      >
-    >
-  ) => {
-    if (isUserLoggedIn(userID)) {
-      fetchWrapper<WorkoutData>(
-        `${ORIGIN}/v1/users/${userID}/routines/${routineID}/workouts`,
-        {
-          retries: 3,
-          method: "POST",
-          body: JSON.stringify(workout),
-          headers: {
-            Accept: "application/json",
-          },
-        }
-      ).then(({ data, error }) => {
-        if (error === null) {
-          setWorkoutLS(data);
-          setWorkouts((workouts) => [...workouts, data]);
-          setTrigger({});
-        } else {
-          // TODO handle error
-        }
-      });
-    } else {
-      const workoutID = Math.max(...workouts.map((w) => w.routineID)) + 1;
-      let indexNumber = Math.max(...workouts.map((w) => w.indexNumber));
-      indexNumber = ((indexNumber / 1024) | 0) * 1024 + 1024;
-      const newWorkout = { ...workout, indexNumber, routineID, workoutID };
-      setWorkoutLS(newWorkout);
-      setWorkouts((workouts) => [...workouts, newWorkout]);
-      setTrigger({});
-    }
+  const postWorkout = (workout: WorkoutData) => {
+    const { workoutID, routineID, indexNumber, ...body } = workout;
+    POST(
+      `${ORIGIN}/v1/users/${userID}/routines/${routineID}/workouts`,
+      userID,
+      "workoutID",
+      body,
+      workout,
+      workouts,
+      setWorkoutLS,
+      setWorkouts,
+      setErrorMessage,
+      setTrigger
+    );
   };
 
-  const updateLocalAfterPut = <T>(workout: Exact<T, WorkoutData>) => {
+  const updateLocalAfterPut = (workout: WorkoutData) => {
     setWorkoutLS(workout);
     setWorkouts((workouts) => {
       const index = workouts.findIndex(
@@ -131,197 +220,106 @@ export const useWorkouts = (
     });
   };
 
-  const putWorkout = <T>(workout: Exact<T, WorkoutData>) => {
-    const { routineID, workoutID, indexNumber, ...body } = workout;
-    if (isUserLoggedIn(userID)) {
-      fetchWrapper(
+  const putWorkout = useCallback(
+    (workout: WorkoutData) => {
+      const { routineID, workoutID, indexNumber, ...body } = workout;
+      PUT(
         `${ORIGIN}/v1/users/${userID}/routines/${routineID}/workouts/${workoutID}`,
-        {
-          retries: 3,
-          method: "PUT",
-          body: JSON.stringify(body),
-          headers: {
-            Accept: "application/x-empty",
-          },
-        }
-      ).then(({ error }) => {
-        if (error !== null) updateLocalAfterPut(workout);
-        else {
-          // TODO handle error
-        }
-      });
-    } else {
-      updateLocalAfterPut(workout);
-    }
-  };
-
-  const updateLocalAfterDelete = <T>(workout: Exact<T, WorkoutData>) => {
-    deleteWorkoutLS(workout);
-    setWorkouts((workouts) => {
-      return workouts.filter(
-        ({ workoutID }) => workoutID !== workout.workoutID
+        userID,
+        "workoutID",
+        workout,
+        body,
+        setWorkoutLS,
+        setWorkouts,
+        setErrorMessage
       );
-    });
-  };
+    },
+    [userID, setErrorMessage]
+  );
 
-  const deleteWorkout = async <T>(workout: Exact<T, WorkoutData>) => {
-    const { routineID, workoutID } = workout;
-    if (isUserLoggedIn(userID)) {
-      fetchWrapper(
-        `${ORIGIN}/v1/users/${userID}/routines/${routineID}/workouts/${workoutID}`,
-        {
-          retries: 3,
-          headers: {
-            Accept: "application/x-empty",
-          },
-          method: "DELETE",
-        }
-      ).then(({ error }) => {
-        if (error === null) {
-          updateLocalAfterDelete(workout);
-        } else {
-          // TODO handle error
-        }
-      });
-    } else {
-      updateLocalAfterDelete(workout);
-    }
+  const debouncePutWorkout = useMemo(
+    () => debounce(putWorkout, 500, updateLocalAfterPut),
+    [putWorkout]
+  );
+
+  const deleteWorkout = async (workout: WorkoutData) => {
+    const { workoutID } = workout;
+    DELETE(
+      `${ORIGIN}/v1/users/${userID}/routines/${routineID}/workouts/${workoutID}`,
+      userID,
+      "workoutID",
+      workout,
+      deleteWorkoutLS,
+      setWorkouts,
+      setErrorMessage
+    );
   };
   return {
     workouts,
     putWorkout,
     postWorkout,
     deleteWorkout,
-    debouncePutWorkout: useCallback(
-      debounce(putWorkout, 500, updateLocalAfterPut),
-      [userID]
-    ),
+    debouncePutWorkout,
   };
 };
 
-export const useRoutines = (userID: number, trigger: {}) => {
+export const useRoutines = (
+  userID: number,
+  trigger: {},
+  setErrorMessage: React.Dispatch<React.SetStateAction<string>>
+) => {
   const [routines, setRoutines] = useState(getRoutinesLS());
   useEffect(() => {
     if (isUserLoggedIn(userID)) {
-      fetchWrapper<RoutineData[]>(`${ORIGIN}/v1/users/${userID}/routines`, {
-        retries: 3,
-        headers: {
-          Accept: "application/json",
-        },
-        method: "GET",
-      }).then(({ data, error }) => {
-        if (error !== null) {
-          // TODO handle error
-        } else {
-          setRoutines(data);
-          setRoutinesLS(data);
-        }
-      });
-    }
-  }, [userID, trigger]);
-
-  const postRoutine = <T>(
-    routine: Exact<
-      T,
-      Prettify<
-        StrictOmit<
-          RoutineData,
-          "routineID" | "userID" | "indexNumber" | "workoutCount"
-        >
-      >
-    >
-  ) => {
-    if (isUserLoggedIn(userID)) {
-      fetchWrapper<RoutineData>(`${ORIGIN}/v1/users/${userID}/routines`, {
-        retries: 3,
-        headers: {
-          Accept: "application/json",
-        },
-        method: "POST",
-        body: JSON.stringify(routine),
-      }).then(({ data, error }) => {
-        if (error === null) {
-          setRoutineLS(data);
-          setRoutines((routines) => [...routines, data]);
-        } else {
-          // TODO handle error
-        }
-      });
-    } else {
-      const routineID = Math.max(...routines.map((r) => r.routineID)) + 1;
-      let indexNumber = Math.max(...routines.map((r) => r.indexNumber));
-      indexNumber = ((indexNumber / 1024) | 0) * 1024 + 1024;
-      const newRoutine = {
-        ...routine,
-        indexNumber,
-        routineID,
-        userID,
-        workoutCount: 0,
-      };
-      setRoutineLS(newRoutine);
-      setRoutines((routines) => [...routines, newRoutine]);
-    }
-  };
-
-  const updateLocalAfterPut = <T>(routine: Exact<T, RoutineData>) => {
-    setRoutineLS(routine);
-    setRoutines((routines) => {
-      const index = routines.findIndex(
-        ({ routineID }) => routineID === routine.routineID
+      GET(
+        `${ORIGIN}/v1/users/${userID}/routines`,
+        setRoutinesLS,
+        setRoutines,
+        setErrorMessage
       );
-      const start = routines.slice(0, index);
-      const end = routines.slice(index + 1);
-      return [...start, routine, ...end];
-    });
-  };
-
-  const putRoutine = <T>(routine: Exact<T, RoutineData>) => {
-    const { routineID, routineName } = routine;
-    if (isUserLoggedIn(userID)) {
-      fetchWrapper(`${ORIGIN}/v1/users/${userID}/routines/${routineID}`, {
-        method: "PUT",
-        body: JSON.stringify({ routineName }),
-        retries: 3,
-        headers: {
-          Accept: "application/x-empty",
-        },
-      }).then(({ error }) => {
-        if (error === null) updateLocalAfterPut(routine);
-        else {
-          // TODO handle error
-        }
-      });
-    } else {
-      updateLocalAfterPut(routine);
     }
+  }, [userID, trigger, setErrorMessage]);
+
+  const postRoutine = (routine: RoutineData) => {
+    const { routineID, userID, indexNumber, workoutCount, ...body } = routine;
+    POST(
+      `${ORIGIN}/v1/users/${userID}/routines`,
+      userID,
+      "routineID",
+      body,
+      routine,
+      routines,
+      setRoutineLS,
+      setRoutines,
+      setErrorMessage
+    );
   };
 
-  const updateLocalAfterDelete = <T>(routine: Exact<T, RoutineData>) => {
-    deleteRoutineLS(routine);
-    setRoutines((routines) => {
-      return routines.filter(
-        ({ routineID }) => routineID !== routine.routineID
-      );
-    });
+  const putRoutine = (routine: RoutineData) => {
+    const { userID, routineID, indexNumber, workoutCount, ...body } = routine;
+    PUT(
+      `${ORIGIN}/v1/users/${userID}/routines/${routineID}`,
+      userID,
+      "routineID",
+      routine,
+      body,
+      setRoutineLS,
+      setRoutines,
+      setErrorMessage
+    );
   };
 
-  const deleteRoutine = <T>(routine: Exact<T, RoutineData>) => {
-    const { userID, routineID } = routine;
-    if (isUserLoggedIn(userID)) {
-      fetchWrapper(`${ORIGIN}/v1/users/${userID}/routines/${routineID}`, {
-        method: "DELETE",
-        retries: 3,
-        headers: { Accept: "application/x-empty" },
-      }).then(({ error }) => {
-        if (error === null) {
-          updateLocalAfterDelete(routine);
-        } else {
-          // TODO handle error
-        }
-      });
-    } else {
-      updateLocalAfterDelete(routine);
-    }
+  const deleteRoutine = (routine: RoutineData) => {
+    const { routineID } = routine;
+    DELETE(
+      `${ORIGIN}/v1/users/${userID}/routines/${routineID}`,
+      userID,
+      "routineID",
+      routine,
+      deleteRoutineLS,
+      setRoutines,
+      setErrorMessage
+    );
   };
 
   return {
@@ -333,28 +331,48 @@ export const useRoutines = (userID: number, trigger: {}) => {
 };
 
 export const useUserState = () => {
-  const token =
-    localStorage.getItem("google-token") ?? localStorage.getItem("apple-token");
-  let id, isLoggedIn;
-  if (token == null) {
-    id = OFFLINE_USER_ID;
-    isLoggedIn = false;
+  const jwt = localStorage.getItem("auth-token");
+  let userID: number;
+  if (jwt == null) {
+    userID = OFFLINE_USER_ID;
   } else {
     try {
-      const payload = parseToken(token)["payload"];
+      const payload = parseJWT<GymRoutineJWT>(jwt)["payload"];
       const ID = +payload.sub;
-      if (isNaN(ID)) {
-        id = OFFLINE_USER_ID;
-        isLoggedIn = false;
+      const exp = +payload.exp;
+      const now = window.performance.now();
+      if (isNaN(ID) || isNaN(exp) || now >= exp) {
+        userID = OFFLINE_USER_ID;
+        localStorage.clear();
       } else {
-        id = ID;
-        isLoggedIn = true;
+        userID = ID;
       }
     } catch {
-      id = OFFLINE_USER_ID;
-      isLoggedIn = false;
+      userID = OFFLINE_USER_ID;
     }
   }
-  const [userID, setUserID] = useState(id);
-  return [{ userID, isLoggedIn }, setUserID] as const;
+  return useState(userID);
+};
+
+export const useLoadScript = (src: string) => {
+  const [isScriptLoaded, setScriptState] = useState(false);
+
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = src;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      setScriptState(true);
+    };
+    script.onerror = () => {
+      setScriptState(false);
+    };
+    document.body.appendChild(script);
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, [src]);
+
+  return isScriptLoaded;
 };

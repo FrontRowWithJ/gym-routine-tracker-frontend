@@ -3,18 +3,19 @@ import { useState } from "react";
 import { MainProps } from "./types";
 import { HomeLink } from "@/components/HomeLink";
 import { RoutinePage } from "@/components/RoutinePage";
-import { Page } from "@/misc";
+import { isUserLoggedIn, Page } from "@/misc";
 import { Divider } from "@/components/Divider";
 import { SettingsMenu } from "@/components/SettingsMenu";
 import { LoginMenu } from "@/components/LoginMenu";
-import { LogoutButton } from "@/components/LogoutButton";
 import { ChartOrWorkoutButton } from "@/components/ChartOrWorkoutButton";
 import { useUserState } from "@/misc/hooks";
+import { LogoutMenu } from "@/components/LogoutMenu";
 
 export const Main = (props: MainProps) => {
   const [currPage, setPage] = useState<Page>("Routine");
   const [mode, setMode] = useState<"Chart" | "Workout">("Workout");
-  const [{ userID, isLoggedIn }, setUserID] = useUserState();
+  const [userID, setUserID] = useUserState();
+  const isLoggedIn = isUserLoggedIn(userID);
   return (
     <main className="main-page">
       <nav>
@@ -29,7 +30,7 @@ export const Main = (props: MainProps) => {
         />
         <span>{currPage}</span>
         <SettingsMenu isLoggedIn={isLoggedIn} userID={userID} />
-        {isLoggedIn ? <LogoutButton /> : <LoginMenu setUserID={setUserID} />}
+        {isLoggedIn ? <LogoutMenu /> : <LoginMenu setUserID={setUserID} />}
       </nav>
       <Divider style={{ marginBottom: "1rem" }} width="100%" margin=".5rem" />
       <RoutinePage page={currPage} setPage={setPage} userID={userID} />

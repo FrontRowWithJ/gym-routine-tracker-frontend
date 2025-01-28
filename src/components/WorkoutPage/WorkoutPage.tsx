@@ -1,41 +1,34 @@
 import { Workout } from "@/components/Workout";
 import { WorkoutPageProps } from "./types";
 import "./WorkoutPage.css";
-import { Divider } from "../Divider";
-import { CreateButton } from "../CreateButton";
-import { CreateOrEditWorkoutDialog } from "../CreateOrEditWorkoutDialog";
+import { Divider } from "@/components/Divider";
+import { CreateButton } from "@/components/CreateButton";
+import { CreateOrEditWorkoutDialog } from "@/components/CreateOrEditWorkoutDialog";
 import { useState } from "react";
-import { WorkoutData } from "@/misc";
 import { YoutubeVideoPlayer } from "@/components/YoutubeVideoPlayer";
 import { Fragment } from "react";
 import { useWorkouts } from "@/misc/hooks";
+import { useErrorBanner } from "@/components/ErrorBanner";
 
-const RESET_VALUE: WorkoutData = {
-  workoutName: "",
-  repCount: 1,
-  setCount: 1,
-  youtubeID: "",
-  unit: "N/A",
-  increment: 0,
-  weight: 0,
-  routineID: 0,
-  workoutID: 0,
-  indexNumber: 0,
-};
-
-export const WorkoutPage = (props: WorkoutPageProps) => {
+export const WorkoutPage = ({
+  userID,
+  routineID,
+  setTrigger,
+}: WorkoutPageProps) => {
   const [openDialog, Dialog] = CreateOrEditWorkoutDialog();
+  const [ErrorBanner, setErrorMessage] = useErrorBanner();
   const {
     workouts,
     putWorkout,
     postWorkout,
     deleteWorkout,
     debouncePutWorkout,
-  } = useWorkouts(props.userID, props.routineID, props.setTrigger);
+  } = useWorkouts(userID, routineID, setTrigger, setErrorMessage);
   const [videoID, setVideoID] = useState("");
   const disableVideo = () => setVideoID("");
   return (
     <>
+      <ErrorBanner />
       {videoID && (
         <>
           <YoutubeVideoPlayer disableVideo={disableVideo} videoID={videoID} />
@@ -61,7 +54,18 @@ export const WorkoutPage = (props: WorkoutPageProps) => {
         label="Create"
         backgroundColor="#39304a"
         width="calc(100% - 2rem)"
-        resetValue={RESET_VALUE}
+        resetValue={{
+          workoutName: "",
+          repCount: 1,
+          setCount: 1,
+          unit: "N/A",
+          indexNumber: 0,
+          weight: 0,
+          increment: 0,
+          youtubeID: "",
+          workoutID: -1,
+          routineID,
+        }}
         PUT={putWorkout}
         POST={postWorkout}
         DELETE={deleteWorkout}
