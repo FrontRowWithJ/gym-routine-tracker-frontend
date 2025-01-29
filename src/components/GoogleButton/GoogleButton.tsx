@@ -29,13 +29,7 @@ export const GoogleButton = ({ setUserID }: GoogleButtonProps) => {
           const fiveMinutesUTCString = new Date(
             Date.now() + FIVE_MINUTES
           ).toUTCString();
-          const secureAttribute =
-            ORIGIN.includes("localhost") ||
-            ORIGIN.includes("127.0.0.1") ||
-            ORIGIN.includes("192.168.1.1")
-              ? ""
-              : "Secure";
-          const cookieAttributes = `Domain=${window.location.hostname}; Expires=${fiveMinutesUTCString}; Max-age=${FIVE_MINUTES}; Path=/v1/auth/google; secure; Samesite=strict; ${secureAttribute}`;
+          const cookieAttributes = `Domain=${window.location.hostname}; Expires=${fiveMinutesUTCString}; Max-age=${FIVE_MINUTES}; Path=/v1/auth/google; secure; Samesite=strict; Secure`;
           document.cookie = `g_csrf_token=${g_csrf_token}; ${cookieAttributes}`;
           fetchWrapper(`${ORIGIN}/v1/auth/google`, {
             method: "POST",
