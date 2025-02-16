@@ -5,8 +5,13 @@ import { useEffect, useRef, useState, Children, cloneElement } from "react";
 import { Close } from "@/resources/SVG";
 import { CLOSE } from "@/misc";
 import { Divider } from "@/components/Divider";
+import { MenuIcon } from "@/components/MenuIcon";
 
-export const ButtonMenu = ({ children, buttonIcon }: ButtonMenuProps) => {
+export const ButtonMenu = ({
+  children,
+  buttonIcon,
+  isLoggedIn,
+}: ButtonMenuProps) => {
   const toggleMenuRef = useRef<HTMLButtonElement>(null);
   const buttonMenuRef = useRef<HTMLMenuElement>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(CLOSE);
@@ -39,6 +44,7 @@ export const ButtonMenu = ({ children, buttonIcon }: ButtonMenuProps) => {
         ref={buttonMenuRef}
       >
         <header>
+          <MenuIcon isLoggedIn={isLoggedIn} />
           <Button onClick={() => setIsMenuOpen(CLOSE)} className="static-noise">
             <Close />
           </Button>
@@ -46,11 +52,11 @@ export const ButtonMenu = ({ children, buttonIcon }: ButtonMenuProps) => {
         <Divider margin="0.5rem" width="calc(100% - 1rem)" />
         <article>
           {Children.map(children, (child) => {
-            const className = (child as any)?.props?.className;
+            const className = (child as any)?.props?.className ?? "";
             return cloneElement(
               child as React.ReactElement<HTMLButtonElement>,
               {
-                className: `${className ?? ""} static-noise`,
+                className: `${className} static-noise`,
               }
             );
           })}
