@@ -8,12 +8,13 @@ import { useState } from "react";
 import { useRoutines } from "@/misc/hooks";
 import { useErrorBanner } from "@/components/ErrorBanner";
 
-export const RoutinePage = (props: RoutinePageProps) => {
+export const RoutinePage = ({ page, userID, setPage }: RoutinePageProps) => {
   const [openDialog, Dialog] = CreateOrEditRoutineDialog();
+  // used to force a render update after the number of routines change
   const [trigger, setTrigger] = useState<{}>({});
   const [ErrorBanner, setErrorMessage] = useErrorBanner();
   const { routines, putRoutine, postRoutine, deleteRoutine } = useRoutines(
-    props.userID,
+    userID,
     trigger,
     setErrorMessage
   );
@@ -22,7 +23,7 @@ export const RoutinePage = (props: RoutinePageProps) => {
     <>
       <ErrorBanner />
       <article className="routine-page">
-        {props.page === "Routine" ? (
+        {page === "Routine" ? (
           <>
             {routines.map((routineData, key) => (
               <Routine
@@ -30,20 +31,19 @@ export const RoutinePage = (props: RoutinePageProps) => {
                 routineData={routineData}
                 setPage={() => {
                   setRoutineID(routineData.routineID);
-                  props.setPage("Workout");
+                  setPage("Workout");
                 }}
                 PUT={putRoutine}
                 POST={postRoutine}
                 DELETE={deleteRoutine}
               />
             ))}
-
             <CreateButton onClick={openDialog} label="Create Routine" />
             <Dialog
+              className="create-routine-dialog"
               label="Create"
-              backgroundColor="brown"
               resetValue={{
-                userID: props.userID,
+                userID,
                 routineID: -1,
                 routineName: "",
                 indexNumber: 1024,
@@ -56,12 +56,7 @@ export const RoutinePage = (props: RoutinePageProps) => {
           </>
         ) : (
           routineID !== undefined && (
-            <WorkoutPage
-              setPage={props.setPage}
-              routineID={routineID}
-              userID={props.userID}
-              setTrigger={setTrigger}
-            />
+            <WorkoutPage {...{ setPage, routineID, userID, setTrigger }} />
           )
         )}
       </article>

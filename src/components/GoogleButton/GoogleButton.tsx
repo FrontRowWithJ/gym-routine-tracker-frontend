@@ -42,7 +42,7 @@ export const GoogleButton = ({ setUserID }: GoogleButtonProps) => {
               Cookie: `g_csrf_token=${g_csrf_token}; ${cookieAttributes}`,
             },
           }).then(({ data: token, error }) => {
-            if (error == null) {
+            if (error === null) {
               try {
                 const payload = parseJWT<GymRoutineJWT>(
                   token as string
@@ -82,7 +82,10 @@ export const GoogleButton = ({ setUserID }: GoogleButtonProps) => {
   return (
     <>
       <ErrorBanner />
-      <div ref={buttonRef} />
+      <div
+        ref={buttonRef}
+        style={{ width: "calc(100% - 1rem)", height: "3rem" }}
+      />
     </>
   );
 };

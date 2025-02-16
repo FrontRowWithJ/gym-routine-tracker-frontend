@@ -2,67 +2,27 @@ import { CreateOrEditWorkoutDialogProps, Action } from "./types";
 import "./CreateOrEditWorkoutDialog.css";
 import { Input } from "@/components/Input";
 import { RadioGroup } from "@/components/RadioGroup";
-import { Minus, Add } from "@/resources/SVG";
-import { Button } from "@/components/Button";
 import { useReducer } from "react";
 import { FormDialog } from "@/components/FormDialog";
-import {
-  FormState,
-  genDefaultFormState,
-  validateName,
-  validateNumber,
-  validateYoutubeLink,
-  WorkoutData,
-  YOUTUBE_ID_LENGTH,
-} from "@/misc";
+import { validateName, WorkoutData } from "@/misc";
+import { Counter } from "../Counter";
+import UrlParser from "js-video-url-parser";
 
-const validateN = (value: string) => validateNumber(value, 1);
-const validators = {
-  unit: () => "",
-  weight: () => "",
-  workoutName: validateName,
-  setCount: validateN,
-  repCount: validateN,
-  increment: validateN,
-  youtubeID: validateYoutubeLink,
-  indexNumber: () => "",
-};
-
-const reducer = (
-  state: FormState<WorkoutData>,
-  action: Action
-): FormState<WorkoutData> => {
-  switch (action.type) {
-    case "reset":
-      return {
-        ...action.value,
-        routineID: state.routineID,
-        workoutID: state.workoutID,
-      };
+const reducer = (state: WorkoutData, { type, value }: Action): WorkoutData => {
+  switch (type) {
+    case "reset": {
+      const { routineID, workoutID } = state;
+      return { ...value, routineID, workoutID };
+    }
     default:
-      return {
-        ...state,
-        [action.type]: {
-          value: action.value,
-          error: validators[action.type]("" + action.value),
-        },
-      };
+      return { ...state, [type]: value };
   }
 };
 
-const toWorkoutData = (state: FormState<WorkoutData>): WorkoutData => {
-  return {
-    routineID: state.routineID.value,
-    workoutID: state.workoutID.value,
-    workoutName: state.workoutName.value,
-    setCount: state.setCount.value,
-    repCount: state.repCount.value,
-    unit: state.unit.value,
-    increment: state.increment.value,
-    weight: state.weight.value,
-    youtubeID: state.youtubeID.value,
-    indexNumber: state.indexNumber.value,
-  };
+const validateYoutubeURL = (url: string) => {
+  return url && UrlParser.parse(url) === undefined
+    ? "Please enter a valid Youtube url."
+    : "";
 };
 
 export const CreateOrEditWorkoutDialog = () => {
@@ -75,20 +35,26 @@ export const CreateOrEditWorkoutDialog = () => {
     DELETE,
     ...dialogProps
   }: CreateOrEditWorkoutDialogProps) => {
-    const defaultFormState = genDefaultFormState(resetValue);
-    const [state, dispatch] = useReducer(reducer, defaultFormState);
-
+    const { youtubeID } = resetValue;
+    const rv: WorkoutData = {
+      ...resetValue,
+      youtubeID: youtubeID
+        ? `https://www.youtube.com/watch?v=${youtubeID}`
+        : "",
+    };
+    const [workoutData, dispatch] = useReducer(reducer, rv);
     return (
       <DialogWrapper
         {...dialogProps}
-        onClose={() => dispatch({ type: "reset", value: defaultFormState })}
-        reset={() => dispatch({ type: "reset", value: defaultFormState })}
+        onClose={() => dispatch({ type: "reset", value: rv })}
+        reset={() => dispatch({ type: "reset", value: rv })}
         save={() => {
-          const workoutData = toWorkoutData(state);
-          if (dialogProps.label === "Create") POST(workoutData);
-          else PUT(workoutData);
+          const id = UrlParser.parse(workoutData.youtubeID)?.id ?? "";
+          const payload: WorkoutData = { ...workoutData, youtubeID: id };
+          if (dialogProps.label === "Create") POST(payload);
+          else PUT(payload);
         }}
-        deleteAction={() => DELETE(toWorkoutData(state))}
+        deleteAction={() => DELETE(workoutData)}
       >
         <div className="create-or-edit-workout-container">
           <Input
@@ -96,10 +62,12 @@ export const CreateOrEditWorkoutDialog = () => {
             placeholder="name"
             minLength={1}
             maxLength={100}
-            focusColor="#e9e9ed"
-            backgroundColor="#39304a"
-            value={state.workoutName.value}
-            errorMessage={state.workoutName.error}
+            value={workoutData.workoutName}
+            onInput={({ currentTarget }) => {
+              currentTarget.setCustomValidity(
+                validateName(currentTarget.value)
+              );
+            }}
             onChange={({ target: { value } }) =>
               dispatch({ type: "workoutName", value })
             }
@@ -109,92 +77,82 @@ export const CreateOrEditWorkoutDialog = () => {
               min={1}
               required
               placeholder="Number of sets"
-              focusColor="#e9e9ed"
-              backgroundColor="#39304a"
               type="number"
-              value={state.setCount.value}
-              errorMessage={state.setCount.error}
+              value={workoutData.setCount}
               onChange={({ target: { value } }) =>
-                dispatch({ type: "setCount", value: +value })
+                dispatch({
+                  type: "setCount",
+                  value: value ? +value : workoutData.setCount,
+                })
               }
             />
             <Input
               required
               min={1}
               placeholder="Reps per set"
-              focusColor="#e9e9ed"
-              backgroundColor="#39304a"
               type="number"
-              value={state.repCount.value}
-              errorMessage={state.repCount.error}
-              onChange={({ target: { value } }) =>
-                dispatch({ type: "repCount", value: +value })
-              }
+              value={workoutData.repCount}
+              onChange={({ target: { value } }) => {
+                dispatch({
+                  type: "repCount",
+                  value: value ? +value : workoutData.repCount,
+                });
+              }}
             />
           </div>
           <RadioGroup
             name="Units"
             values={["N/A", "kg", "s", "mins"]}
-            value={state.unit.value}
+            value={workoutData.unit}
             onChange={(value) => dispatch({ type: "unit", value })}
           />
 
           <div className="numerical-input-wrapper">
             <Input
+              min={1}
               required
               placeholder="increment"
-              focusColor="#e9e9ed"
-              backgroundColor="#39304a"
               type="number"
-              value={state.increment.value}
-              errorMessage={state.increment.error}
+              value={workoutData.increment}
               onChange={({ target: { value } }) =>
-                dispatch({ type: "increment", value: +value })
+                dispatch({
+                  type: "increment",
+                  value: value ? +value : workoutData.increment,
+                })
               }
             />
-            <div className="weight-counter">
-              <label style={{ backgroundColor: "#39304a" }}>Weight</label>
-              <Button
-                type="button"
-                onClick={() => {
-                  dispatch({
-                    type: "weight",
-                    value: state.weight.value + state.increment.value,
-                  });
-                }}
-              >
-                <Add />
-              </Button>
-              <div>{`${state.weight.value}`}</div>
-              <Button
-                type="button"
-                onClick={() => {
-                  dispatch({
-                    type: "weight",
-                    value: Math.max(
-                      0,
-                      state.weight.value - state.increment.value
-                    ),
-                  });
-                }}
-              >
-                <Minus />
-              </Button>
-            </div>
+            <Counter
+              placeholder="Weight"
+              increment={() => {
+                dispatch({
+                  type: "weight",
+                  value: workoutData.weight + workoutData.increment,
+                });
+              }}
+              value={workoutData.weight}
+              decrement={() => {
+                dispatch({
+                  type: "weight",
+                  value: Math.max(
+                    0,
+                    workoutData.weight - workoutData.increment
+                  ),
+                });
+              }}
+            />
           </div>
           <Input
-            placeholder="Youtube Tutorial Video ID"
-            focusColor="#e9e9ed"
-            type="pattern"
-            minLength={YOUTUBE_ID_LENGTH}
-            maxLength={YOUTUBE_ID_LENGTH}
-            backgroundColor="#39304a"
-            pattern={`^[\\w\\-_]{${YOUTUBE_ID_LENGTH}}$`}
-            value={state.youtubeID.value}
-            errorMessage={state.youtubeID.error}
-            onChange={({ target: { value } }) => {
-              dispatch({ type: "youtubeID", value });
-            }}
+            placeholder="Youtube Tutorial"
+            type="text"
+            value={workoutData.youtubeID}
+            onInput={({ currentTarget }) =>
+              currentTarget.setCustomValidity(
+                validateYoutubeURL(currentTarget.value)
+              )
+            }
+            onChange={({ target: { value } }) =>
+              dispatch({ type: "youtubeID", value })
+            }
           />
         </div>
       </DialogWrapper>

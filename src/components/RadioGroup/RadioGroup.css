@@ -2,23 +2,32 @@
   display: flex;
   width: 100%;
   justify-content: space-between;
-  border: 1px solid beige;
+  border: 2px solid var(--static-noise-bg);
+  border-radius: 4px;
   align-items: center;
+  color: var(--label-color);
+  margin: 0px;
+  margin-bottom: 1.25rem; /* match */
+  padding: 0 8px;
+
+  legend {
+    padding: 0 5px 0 5px;
+    font-size: 0.75rem;
+  }
 
   > div {
     display: flex;
     align-items: center;
+    translate: 0 -3.75px; /* minor adjust because fieldset legend reduces content box*/
 
     > div {
       display: flex;
-      justify-self: center;
       align-items: center;
-      border-radius: 100vw;
-      aspect-ratio: 1 / 1;
-      width: min(100%, 3rem);
+      border-radius: 4px;
     }
     label {
       white-space: nowrap;
+      font-size: 1rem;
     }
 
     input {
@@ -29,6 +38,9 @@
       cursor: pointer;
       background-color: transparent;
       position: relative;
+      height: 1.4375rem;
+      box-sizing: content-box;
+      padding: 16.5px 14px;
     }
 
     input::before,
@@ -44,21 +56,24 @@
 
     input::before {
       width: 0px;
-      background-color: white;
-    }
-
-    input:checked::before {
-      background-color: orange;
-      width: 20.08333%;
     }
 
     input::after {
       width: 33.333%;
-      border: 2px solid white;
+      border: 2px solid var(--label-color);
+    }
+
+    input:checked::before {
+      width: 20.08333%;
+      background-color: var(--text-color);
     }
 
     input:checked::after {
-      border: 2px solid orange;
+      border: 2px solid var(--text-color);
+    }
+
+    div:has(input:checked) + label {
+      color: var(--text-color);
     }
   }
 

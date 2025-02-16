@@ -5,6 +5,7 @@ body,
   all: unset;
   width: 100%;
   height: 100%;
+  font-family: "Roboto", serif;
 }
 
 * {
@@ -18,4 +19,99 @@ body,
   -moz-user-select: none; /* Old versions of Firefox */
   -ms-user-select: none; /* Internet Explorer/Edge */
   user-select: none; /* Non-prefixed version, currently supported by Chrome, Edge, Opera and Firefox */
+}
+
+#g_a11y_announcement {
+  display: none !important; /* quick hack to prevent the google login button from fucking up the UI */
+}
+
+/* Google credential picker is not center aligned */
+#credential_picker_container {
+  left: 50%;
+  translate: -50% 0;
+}
+
+@property --hue {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+.frosted-glass {
+  background: hsl(
+    var(--hue) var(--saturation) var(--luminosity) / var(--alpha)
+  );
+  border: 1px solid hsl(var(--hue) var(--saturation) var(--luminosity));
+  box-shadow: 0 4px 30px var(--box-shadow);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(6px);
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-repeat: repeat;
+    background-image: url("https://framerusercontent.com/images/rR6HYXBrMmX4cRpXfXUOvpvpB0.png");
+    opacity: 0.03;
+  }
+}
+
+.static-noise {
+  background: var(
+    --static-noise-bg
+  ) !important; /* override Button.ui-button background*/
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  border: 1px solid var(--static-noise-border) !important /* override Button.ui-button border*/;
+  &::before {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    background-image: url("https://framerusercontent.com/images/rR6HYXBrMmX4cRpXfXUOvpvpB0.png");
+    filter: var(--background-filter);
+    opacity: 0.03 !important; /* override .ripple:hover::before opacity*/
+    background-repeat: repeat;
+  }
+}
+
+/* Dark-Light Theme */
+
+html[data-theme="light"] {
+  --main-background: white;
+  --dot-color-init: black;
+  --dot-color-transition: black;
+  --background-filter: invert(1);
+  --text-color: black;
+  --svg-fill: black;
+  --ripple-color: #121e2c;
+  --static-noise-bg: rgba(0, 0, 0, 0.23);
+  --static-noise-border: rgba(0, 0, 0, 0.3);
+  --box-shadow: rgba(255, 255, 255, 0.1);
+  --luminosity: 63.9%;
+  --saturation: 63.5%;
+  --backdrop-fade: #ffffff80;
+  --label-color: rgba(0, 0, 0, 0.7);
+  --routine-border-color: rgba(0, 0, 0, 0.5);
+  --routine-button-border-color: rgba(0, 0, 0, 0.16);
+  --alpha: 0.83;
+}
+html[data-theme="dark"] {
+  --main-background: black;
+  --dot-color-init: white;
+  --dot-color-transition: white;
+  --background-filter: invert(0);
+  --text-color: white;
+  --svg-fill: white;
+  --ripple-color: #ede1d3;
+  --static-noise-bg: rgba(255, 255, 255, 0.23);
+  --static-noise-border: rgba(255, 255, 255, 0.3);
+  --box-shadow: rgba(0, 0, 0, 0.1);
+  --luminosity: 36.1%;
+  --saturation: 36.5%;
+  --backdrop-fade: #00000080;
+  --label-color: rgba(255, 255, 255, 0.7);
+  --routine-border-color: rgba(255, 255, 255, 0.5);
+  --routine-button-border-color: rgba(255, 255, 255, 0.16);
+  --alpha: 0.17;
 }

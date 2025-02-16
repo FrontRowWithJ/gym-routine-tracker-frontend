@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import {
-  getTheme,
   getWorkoutsLS,
   setWorkoutLS,
   setWorkoutsLS,
@@ -12,38 +11,9 @@ import {
   isUserLoggedIn,
   parseJWT,
 } from "./util";
-import { GymRoutineJWT, RoutineData, Theme, WorkoutData } from "./types";
-import { DEFAULT_ERROR_MESSAGE, MATCH_MEDIA_QUERY, OFFLINE_USER_ID, ORIGIN } from "./constants";
+import { GymRoutineJWT, RoutineData, WorkoutData } from "./types";
+import { DEFAULT_ERROR_MESSAGE, OFFLINE_USER_ID, ORIGIN } from "./constants";
 import { debounce, fetchWrapper } from "./fetchHandler";
-
-export const useTheme = () => {
-  const [theme, _setTheme] = useState<Theme>(getTheme());
-
-  useEffect(() => {
-    const handleStorage = ({ newValue, key }: StorageEvent) => {
-      if (key === "theme" && (newValue === "dark" || newValue === "light"))
-        setTheme(newValue);
-    };
-    window.addEventListener("storage", handleStorage);
-
-    const handleChange = (e: MediaQueryListEvent) =>
-      setTheme(e.matches ? "dark" : "light");
-    const media = window.matchMedia(MATCH_MEDIA_QUERY);
-    media.addEventListener("change", handleChange);
-    return () => {
-      window.removeEventListener("storage", handleStorage);
-      media.removeEventListener("change", handleChange);
-    };
-  }, []);
-
-  const setTheme = (theme: Theme) => {
-    _setTheme(theme);
-    const html = document.documentElement;
-    html.setAttribute("data-theme", theme);
-    localStorage.setItem("theme", theme);
-  };
-  return [theme, setTheme] as const;
-};
 
 const GET = <T>(
   URL: string,
@@ -193,6 +163,7 @@ export const useWorkouts = (
   }, [userID, routineID, setErrorMessage]);
 
   const postWorkout = (workout: WorkoutData) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { workoutID, routineID, indexNumber, ...body } = workout;
     POST(
       `${ORIGIN}/v1/users/${userID}/routines/${routineID}/workouts`,
@@ -222,6 +193,7 @@ export const useWorkouts = (
 
   const putWorkout = useCallback(
     (workout: WorkoutData) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { routineID, workoutID, indexNumber, ...body } = workout;
       PUT(
         `${ORIGIN}/v1/users/${userID}/routines/${routineID}/workouts/${workoutID}`,
@@ -281,6 +253,7 @@ export const useRoutines = (
   }, [userID, trigger, setErrorMessage]);
 
   const postRoutine = (routine: RoutineData) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { routineID, userID, indexNumber, workoutCount, ...body } = routine;
     POST(
       `${ORIGIN}/v1/users/${userID}/routines`,
@@ -296,6 +269,7 @@ export const useRoutines = (
   };
 
   const putRoutine = (routine: RoutineData) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { userID, routineID, indexNumber, workoutCount, ...body } = routine;
     PUT(
       `${ORIGIN}/v1/users/${userID}/routines/${routineID}`,
@@ -321,7 +295,6 @@ export const useRoutines = (
       setErrorMessage
     );
   };
-
   return {
     routines,
     putRoutine,
@@ -333,7 +306,7 @@ export const useRoutines = (
 export const useUserState = () => {
   const jwt = localStorage.getItem("auth-token");
   let userID: number;
-  if (jwt == null) {
+  if (jwt === null) {
     userID = OFFLINE_USER_ID;
   } else {
     try {
@@ -354,25 +327,9 @@ export const useUserState = () => {
   return useState(userID);
 };
 
-export const useLoadScript = (src: string) => {
-  const [isScriptLoaded, setScriptState] = useState(false);
-
-  useEffect(() => {
-    const script = document.createElement("script");
-    script.src = src;
-    script.async = true;
-    script.defer = true;
-    script.onload = () => {
-      setScriptState(true);
-    };
-    script.onerror = () => {
-      setScriptState(false);
-    };
-    document.body.appendChild(script);
-    return () => {
-      document.body.removeChild(script);
-    };
-  }, [src]);
-
-  return isScriptLoaded;
+export const useToggle = <const A, const B>(initalValue: A, other: B) => {
+  const [state, setState] = useState<A | B>(initalValue);
+  const toggle = (newState?: A | B) =>
+    setState(newState ?? (state === initalValue ? other : initalValue));
+  return [state, toggle] as const;
 };

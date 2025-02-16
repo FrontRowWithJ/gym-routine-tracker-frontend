@@ -1,4 +1,4 @@
 export type CreateButtonProps = {
-  onClick: React.MouseEventHandler<HTMLDivElement>;
+  onClick: React.MouseEventHandler<HTMLButtonElement>;
   label: string;
 };

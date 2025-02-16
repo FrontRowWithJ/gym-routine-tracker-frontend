@@ -1,6 +1,4 @@
-import { SVGProp } from "./SVGTypes";
-
-export const Check = (props: SVGProp) => (
+export const Check = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960">
     <path d="M389-267 195-460l51-52 143 143 325-324 51 51-376 375Z" />
   </svg>

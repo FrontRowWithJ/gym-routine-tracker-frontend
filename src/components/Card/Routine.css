@@ -1,76 +1,57 @@
 .routine {
   width: 10rem;
-  background-color: blueviolet;
   aspect-ratio: 1 / 1.414;
   overflow: hidden;
   position: relative;
   margin: 0.5rem;
-  border-radius: 1rem;
-  box-shadow: rgba(120, 44, 44, 0.16) 0px 3px 6px,
-    rgba(0, 0, 0, 0.23) 0px 3px 6px;
-  display: grid;
-  grid-template-columns: 1fr;
-  grid-template-rows: auto 1fr;
-  border: 1px solid #ede1d380;
+  border-radius: 4px;
+  border: 1px solid var(--routine-border-color);
   cursor: pointer;
+  height: fit-content;
 
-  .edit-button {
-    position: absolute;
-    left: 0;
-    top: 0;
-    margin: 0.5rem;
-    height: 2.5rem;
-    width: 2.5rem;
-    border: none;
-    cursor: pointer;
+  button {
     z-index: 1;
-    padding: 0;
-    background-color: transparent;
-    box-shadow: none;
-    border-radius: 0.5rem;
-    background-color: blueviolet;
-
-    svg {
-      width: 75%;
-      height: 75%;
-      fill: pink;
-    }
-  }
-
-  picture {
-    aspect-ratio: 1 / 1;
-    width: 100%;
-    display: flex;
-
-    img {
-      aspect-ratio: 1 / 1;
-      width: 100%;
-      object-fit: contain;
-      border-radius: 1rem;
-      padding: 0;
-      margin: 0;
+    margin: 0.5rem 0.5rem 0.5rem auto;
+    border-radius: 4px;
+    background-color: var(--routine-button-border-color);
+    &::before {
+      opacity: 0.03 !important; /* override .ripple:hover::before opacity*/
     }
   }
 
   > svg {
-    aspect-ratio: 1 / 1;
-    width: 100%;
-    border-radius: 1rem 1rem 0 0;
+    position: absolute;
+    top: 0;
+    height: 100%;
+    left: 50%;
+    translate: -50% 0;
+    background-color: var(--main-background);
   }
 
   > article {
+    color: var(--text-color);
+    font-weight: bold;
+    letter-spacing: 1px;
+    position: absolute;
     width: 100%;
-    height: 100%;
-
-    > header {
-      padding-left: 0.5rem;
-    }
-
+    aspect-ratio: 1 / calc(sqrt(2) - 1);
+    bottom: 0;
+    background-color: var(--static-noise-bg);
+    padding: 0.5rem 0 0 0.5rem;
+    border: none; /* overriding .frosted-glass:border*/
+    backdrop-filter: blur(7px);
+    
     > h5 {
-      margin: 0;
+      letter-spacing: normal;
+      font-weight: normal;
       margin-top: 0.25rem;
-      padding-left: 0.5rem;
       opacity: 0.6;
     }
+  }
+}
+
+.edit-routine-dialog {
+  form {
+    --hue: 31;
   }
 }

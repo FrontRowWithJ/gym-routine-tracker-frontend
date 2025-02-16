@@ -1,14 +1,12 @@
-import { RoutineIconProps } from "@/resources/SVG";
 import {
-  FormState,
   Theme,
   WorkoutDataCache,
   RoutineData,
   WorkoutData,
   RemoveOptional,
 } from "./types";
-import jsSHA from "jssha";
 import { OFFLINE_USER_ID } from "./constants";
+import jsSHA from "jssha";
 
 export const getTheme: () => Theme = () => {
   const theme = window.matchMedia("(prefers-color-scheme: dark)").matches
@@ -22,111 +20,10 @@ export const getYoutubeThumbnail = (youtubeID: string) => {
   return `https://i3.ytimg.com/vi/${youtubeID}/mqdefault.jpg` as const;
 };
 
-export const genDefaultFormState = <T>(resetValue: T): FormState<T> => {
-  return Object.keys(resetValue).reduce<FormState<T>>((prev, key) => {
-    prev[key] = { error: "", value: resetValue[key] };
-    return prev;
-  }, {} as FormState<T>);
-};
-
 //! Validators
-
-export const validateNumber = (value: string, minimumValue: number): string => {
-  if (!/^\d*$/.test(value)) return "Number is invalid.";
-  return +value < minimumValue
-    ? `Number must be greater than ${minimumValue - 1}.`
-    : "";
-};
 
 export const validateName = (value: string): string =>
   value.length > 0 ? "" : "Name can't be empty.";
-
-export const validateYoutubeLink = (value: string): string =>
-  /^[\w-]{11}$|^$/.test(value) ? "" : "Please enter a valid video id.";
-
-const orders = [
-  [0, 1, 2],
-  [0, 2, 1],
-  [1, 0, 2],
-  [1, 2, 0], //!
-  [2, 0, 1], //!
-  [2, 1, 0],
-];
-
-const byteToOrder = (byte: number) => {
-  const n = ((byte / 256) * orders.length) | 0;
-  return orders[n];
-};
-
-const shuffle = (bytes: Uint8Array, order: number[]) => {
-  return [bytes[order[0]], bytes[order[1]], bytes[order[2]]];
-};
-
-/**
- * Converts an RGB color value to HSL. Conversion formula
- * adapted from http://en.wikipedia.org/wiki/HSL_color_space.
- * Assumes r, g, and b are contained in the set [0, 255] and
- * returns h, s, and l in the set [0, 1].
- *
- * @param   {number}  r       The red color value
- * @param   {number}  g       The green color value
- * @param   {number}  b       The blue color value
- * @return  {Array}           The HSL representation
- */
-const rgbToHsl = (r: number, g: number, b: number) => {
-  r /= 255;
-  g /= 255;
-  b /= 255;
-  const vmax = Math.max(r, g, b);
-  const vmin = Math.min(r, g, b);
-  let h: number = 0;
-  let s: number;
-  let l = (vmax + vmin) / 2;
-
-  if (vmax === vmin) return [0, 0, l]; // achromatic
-
-  const d = vmax - vmin;
-  s = l > 0.5 ? d / (2 - vmax - vmin) : d / (vmax + vmin);
-  if (vmax === r) h = (g - b) / d + (g < b ? 6 : 0);
-  if (vmax === g) h = (b - r) / d + 2;
-  if (vmax === b) h = (r - g) / d + 4;
-  h /= 6;
-
-  return [(h * 360) | 0, Math.max(50, (s * 100) | 0), (l * 100) | 0];
-};
-// UPGRADE use a better image generator
-const getColors = (color: Uint8Array, byte: number) => {
-  const order = byteToOrder(byte);
-  const shuffledColor = shuffle(color, order);
-  const [r, g, b] = shuffledColor;
-  const [h, s, l] = rgbToHsl(r, g, b);
-  return {
-    stopColor0: `hsl(${h}, ${s}%, ${l}%)`,
-    stopColor1: `hsl(${(h + 90) % 360}, ${s}%, ${l}%)`,
-    stopColor2: `hsl(${(h + 180) % 360}, ${s}%, ${l}%)`,
-    fill: `hsl(${(h + 270) % 360}, ${s}%, ${l}%)`,
-  };
-};
-
-// const shaObj = new jsSHA("SHA3-512", "TEXT");
-export const genIconProps = (value: string): RoutineIconProps => {
-  // shaObj.update(value)
-  const shaObj = new jsSHA("SHA-224", "TEXT", {
-    hmacKey: { value, format: "TEXT" },
-  });
-
-  const hash = shaObj.getHash("UINT8ARRAY");
-  const hashString = shaObj.getHash("HEX");
-  // const hash = genRandomUintArray(20);
-  const byte0 = (hash[12] << 8) | hash[13];
-  const angle = (((byte0 >>> 7) / 512) * 360) | 0;
-  // return { stopColor0, stopColor1, stopColor2, fill, angle, hash: hashString };
-  return {
-    ...getColors(hash.subarray(0, 6), hash[14]),
-    angle,
-    hash: hashString,
-  };
-};
 
 // UPGRADE swap out localstorage for indexedDB
 export const getCache = () => {
@@ -250,7 +147,7 @@ export const parseJWT = <
       payload: JSON.parse(window.atob(payload)),
       signature,
     } as JWT;
-  } catch (err) {
+  } catch {
     throw new Error("Invalid token");
   }
 };
@@ -278,4 +175,35 @@ export const applyDefaultRequestInitParams = (
     },
     ...rest,
   };
+};
+
+export const logout = () => {
+  localStorage.removeItem("auth-token");
+  localStorage.removeItem("cache");
+  window.location.href = window.location.origin;
+};
+
+export const animateBackground = (
+  direction: "forwards" | "reverse" = "forwards"
+) => {
+  const controller = new AbortController();
+  const main = document.getElementsByClassName(
+    "main-page"
+  )![0] as HTMLDivElement;
+  const classNames = ["domain-expansion", `animate-${direction}`];
+  main.addEventListener(
+    "animationend",
+    () => {
+      main.classList.remove(...classNames);
+      controller.abort();
+    },
+    { signal: controller.signal }
+  );
+  main.classList.add(...classNames);
+};
+
+export const hashString = (value: string) => {
+  return new jsSHA("SHA-256", "TEXT", {
+    hmacKey: { value, format: "TEXT", encoding: "UTF8" },
+  }).getHash("UINT8ARRAY", { outputLen: 16 });
 };

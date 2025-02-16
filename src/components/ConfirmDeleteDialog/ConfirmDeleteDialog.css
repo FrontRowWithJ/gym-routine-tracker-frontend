@@ -2,14 +2,21 @@
   article {
     display: flex;
     flex-direction: column;
-    background-color: beige;
     width: 90%;
     align-items: center;
-    border-radius: 1rem;
+    border-radius: 4px;
+    color: white;
+    --hue: 0;
+    transition: opacity cubic-bezier(0.33, 1, 0.68, 1) 300ms;
+    opacity: 1;
+    @starting-style {
+      opacity: 0;
+    }
     > svg {
       width: 1.5rem;
       height: 1.5rem;
       margin: 1.5rem 0 0 0;
+      fill: red;
     }
 
     h1 {
@@ -17,7 +24,7 @@
       margin-bottom: 0;
     }
 
-    h5 {
+    h4 {
       padding: 0 1rem;
       font-weight: normal;
     }
@@ -32,25 +39,24 @@
       button {
         box-shadow: none;
         width: 6rem;
-        padding: .5rem 0;
+        padding: 0.5rem 0;
         background-color: transparent;
-      }
-
-      button:hover {
-        box-shadow: rgba(0, 0, 0, 0.16) 0px 3px 6px,
-          rgba(0, 0, 0, 0.23) 0px 3px 6px;
-      }
-
-      button:nth-of-type(2) {
-        background-color: #12172f;
-        color: white;
+        font-weight: bold;
+        background-color: #ff000030;
+        &:hover {
+          box-shadow: rgba(0, 0, 0, 0.16) 0px 3px 6px,
+            rgba(0, 0, 0, 0.23) 0px 3px 6px;
+        }
+        &:nth-of-type(2) {
+          background-color: #ff000090;
+        }
       }
     }
   }
 }
 
 .confirm-delete-dialog::backdrop {
-  background-color: #00000080;
+  background-color: var(--backdrop-fade);
 }
 
 .confirm-delete-dialog[open] {

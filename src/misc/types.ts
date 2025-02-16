@@ -25,16 +25,9 @@ export type Theme = "dark" | "light";
 export type Page = "Workout" | "Routine";
 export type Unit = "N/A" | "kg" | "s" | "mins";
 
-export type FormState<T> = {
-  [key in keyof T]: {
-    value: T[key];
-    error: string;
-  };
-};
-
 export type StateToAction<T> =
   | { [K in keyof T]: { type: K; value: T[K] } }[keyof T]
-  | { type: "reset"; value: FormState<T> };
+  | { type: "reset"; value: T };
 
 export type WorkoutDataCache = {
   [routineID: string]: StrictOmit<RoutineData, "routineID"> & {
@@ -108,7 +101,7 @@ type GymRoutineJWTPayload = {
   exp: number;
   nbf: number;
   iat: number;
-  preferred_username: string;
+  picture: string;
 };
 
 export type GymRoutineJWT = JWT<GymRoutineJWTHeader, GymRoutineJWTPayload>;

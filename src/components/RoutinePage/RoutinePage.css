@@ -1,5 +1,11 @@
 .routine-page {
   display: flex;
-  flex-wrap: wrap;
-  overflow-x: scroll;
+  flex-wrap: wrap;  
+  overflow-y: scroll;
+}
+
+.create-routine-dialog {
+  form {
+    --hue: 127;
+  }
 }

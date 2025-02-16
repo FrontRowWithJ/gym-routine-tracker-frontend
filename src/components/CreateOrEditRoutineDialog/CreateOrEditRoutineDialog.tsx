@@ -3,40 +3,19 @@ import "./CreateOrEditRoutineDialog.css";
 import { Input } from "@/components/Input";
 import { useReducer } from "react";
 import { FormDialog } from "@/components/FormDialog";
-import {
-  RoutineData,
-  FormState,
-  genDefaultFormState,
-  validateName,
-} from "@/misc";
+import { RoutineData, validateName } from "@/misc";
 
-const reducer = (
-  state: FormState<RoutineData>,
-  { type, value }: Action
-): FormState<RoutineData> => {
+const reducer = (state: RoutineData, { type, value }: Action): RoutineData => {
   switch (type) {
     case "reset":
       return { ...value, routineID: state.routineID, userID: state.userID };
-    case "routineName":
-      return { ...state, routineName: { value, error: validateName(value) } };
     default:
-      return state;
+      return { ...state, [type]: value };
   }
-};
-
-const toRoutineData = (state: FormState<RoutineData>): RoutineData => {
-  return {
-    routineName: state.routineName.value,
-    userID: state.userID.value,
-    routineID: state.routineID.value,
-    indexNumber: state.indexNumber.value,
-    workoutCount: state.workoutCount.value,
-  };
 };
 
 export const CreateOrEditRoutineDialog = () => {
   const [openDialog, DialogWrapper] = FormDialog();
-
   const Dialog = ({
     resetValue,
     PUT,
@@ -44,20 +23,15 @@ export const CreateOrEditRoutineDialog = () => {
     DELETE,
     ...dialogProps
   }: CreateOrEditRoutineDialogProps) => {
-    const defaultFormState = genDefaultFormState(resetValue);
-    const [state, dispatch] = useReducer(reducer, defaultFormState);
+    const [state, dispatch] = useReducer(reducer, resetValue);
+    const save = dialogProps.label === "Create" ? POST : PUT;
     return (
       <DialogWrapper
         {...dialogProps}
-        reset={() => dispatch({ type: "reset", value: defaultFormState })}
-        onClose={() => dispatch({ type: "reset", value: defaultFormState })}
-        save={() => {
-          const routineData = toRoutineData(state);
-          if (dialogProps.label === "Create") {
-            POST(routineData);
-          } else PUT(routineData);
-        }}
-        deleteAction={() => DELETE(toRoutineData(state))}
+        reset={() => dispatch({ type: "reset", value: resetValue })}
+        onClose={() => dispatch({ type: "reset", value: resetValue })}
+        save={() => save(state)}
+        deleteAction={() => DELETE(state)}
       >
         <div className="create-or-edit-routine-container">
           <Input
@@ -65,15 +39,14 @@ export const CreateOrEditRoutineDialog = () => {
             minLength={1}
             maxLength={64}
             type="text"
-            className="name-input"
             placeholder="name"
-            backgroundColor="brown"
-            focusColor="white"
-            value={state.routineName.value}
-            errorMessage={state.routineName.error}
-            onChange={({ target: { value } }) => {
-              dispatch({ type: "routineName", value });
-            }}
+            value={state.routineName}
+            onInput={({ currentTarget }) =>
+              currentTarget.setCustomValidity(validateName(currentTarget.value))
+            }
+            onChange={({ target }) =>
+              dispatch({ type: "routineName", value: target.value })
+            }
           />
         </div>
       </DialogWrapper>

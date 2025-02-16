@@ -1,8 +1,6 @@
-import { Page } from "@/misc";
-
 export type WorkoutPageProps = {
   userID: number;
   routineID: number;
-  setPage: React.Dispatch<React.SetStateAction<Page>>;
-  setTrigger: React.Dispatch<React.SetStateAction<{}>>
+  setPage: (newState?: "Workout" | "Routine") => void;
+  setTrigger: React.Dispatch<React.SetStateAction<{}>>;
 };
