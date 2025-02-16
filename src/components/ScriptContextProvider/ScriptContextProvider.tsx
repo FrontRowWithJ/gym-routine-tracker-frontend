@@ -11,7 +11,7 @@ function useLoadScript(src: string): boolean {
     script.async = script.defer = true;
     document.body.appendChild(script);
     return () => void document.body.removeChild(script);
-  }, []);
+  }, [src]);
   return isScriptLoaded;
 }
 export const ScriptContextProvider = (props: ScriptContextProviderProps) => {

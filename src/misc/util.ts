@@ -25,7 +25,6 @@ export const getYoutubeThumbnail = (youtubeID: string) => {
 export const validateName = (value: string): string =>
   value.length > 0 ? "" : "Name can't be empty.";
 
-// UPGRADE swap out localstorage for indexedDB
 export const getCache = () => {
   const cache = localStorage.getItem("cache");
   if (cache === null) {

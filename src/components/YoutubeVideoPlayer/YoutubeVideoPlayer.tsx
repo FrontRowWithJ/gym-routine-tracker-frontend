@@ -1,6 +1,5 @@
 import { YoutubeVideoPlayerProps } from "./types";
 import "./YoutubeVideoPlayer.css";
-import YouTube from "react-youtube";
 import { useEffect, useState } from "react";
 import { OPEN, CLOSE } from "@/misc";
 
@@ -30,7 +29,14 @@ export const YoutubeVideoPlayer = () => {
         if (event.target === event.currentTarget) setDialog(event, CLOSE);
       }}
     >
-      <YouTube className="youtube-player" videoId={props.videoID} />
+      <div className="youtube-player">
+        <iframe
+          src={`https://www.youtube.com/embed/${props.videoID}`}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          title="Embedded youtube"
+        />
+      </div>
     </dialog>
   );
   return [

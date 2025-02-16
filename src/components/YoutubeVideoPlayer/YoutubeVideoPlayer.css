@@ -29,10 +29,12 @@
       translate: 0 2rem;
     }
     iframe {
+      all: unset;
       width: 100%;
       aspect-ratio: 16 / 9;
       height: unset;
       background-color: black;
+      /* border: 0; */
     }
   }
 }

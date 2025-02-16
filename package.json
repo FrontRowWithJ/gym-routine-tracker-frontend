@@ -5,10 +5,8 @@
   "dependencies": {
     "js-video-url-parser": "^0.5.1",
     "jssha": "^3.3.1",
-    "md5": "^2.3.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "react-youtube": "^10.1.0"
+    "react-dom": "^19.0.0"
   },
   "scripts": {
     "start": "craco start",
@@ -39,11 +37,6 @@
     "@babel/eslint-parser": "^7.26.8",
     "@craco/craco": "^5.9.0",
     "@eslint/js": "^9.20.0",
-    "@testing-library/jest-dom": "^5.17.0",
-    "@testing-library/react": "^16.1.0",
-    "@testing-library/user-event": "^13.5.0",
-    "@types/jest": "^27.5.2",
-    "@types/md5": "^2.3.5",
     "@types/node": "^16.18.113",
     "@types/react": "^19.0.6",
     "@types/react-dom": "19.0.2",
