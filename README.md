@@ -51,80 +51,37 @@ The backend was built with:\
 
 ## Guide
 
-<p>
+<div style="display: flex; align-items: center">
   <img align="left" src="./login-screen.png" width="125" height="290" alt="Login Screen"/>
-  <br/>
-  <br/>
-  <br/>
-  <br/>
   <h3 align="left">You can start by signing in with Google but you can use the app without creating an account.</h3>
-  <br/>
-  <br/>
-  <br/>
-  <br/>
-</p>
-<p>
+</div>
+</br>
+<div style="display: flex; align-items: center">
   <img align="left" src="./create-routine.png" width="125" height="290" alt="Create Routine Screen"/>
-  <br/>
-  <br/>
-  <br/>
-  <br/>
   <h3 align="left">Next, create a routine. You can name it whatever</h3>
-  <br/>
-  <br/>
-  <br/>
-  <br/>
-</p>
-<p>
+</div>
+</br>
+<div style="display: flex; align-items: center">
   <img align="left" src="./create-workout.png" width="125" height="290" alt="Create Workout Screen"/>
-  <br/>
-  <br/>
-  <br/>
-  <br/>
   <h3 align="left">Next, create a workout. You can name it whatever</h3>
-  <br/>
-  <br/>
-  <br/>
-  <br/>
-</p>
-<p>
+</div>
+</br>
+<div style="display: flex; align-items: center;">
   <img align="left" src="./edit-routine.png" width="125" height="290" alt="Edit Workout Screen"/>
   <img align="left" src="./edit-workout.png" width="125" height="290" alt="Edit Workout Screen"/>
-  <br/>
-  <br/>
-  <br/>
-  <br/>
-  <h3 align="left">You can edit your routines and workouts. </h3>
-  <br/>
-  <br/>
-  <br/>
-  <br/>
-</p>
-<p>
+  <h3 align="left">You can edit your routines and workouts.</h3>
+</div>
+</br>
+<div style="display: flex; align-items: center">
   <img align="left" src="./use-workout.png" width="125" height="290" alt="Edit Workout Screen"/>
-  <br/>
-  <br/>
-  <br/>
-  <br/>
   <h3 align="left">Increment/Decrement the weight amount or play the workout video.</h3>
-  <br/>
-  <br/>
-  <br/>
-  <br/>
-</p>
-<p>
+</div>
+</br>
+<div style="display: flex; align-items: center;">
   <img align="left" src="./light-mode.png" width="125" height="290" alt="Edit Workout Screen"/>
   <img align="left" src="./dark-mode.png" width="125" height="290" alt="Edit Workout Screen"/>
-  <br/>
-  <br/>
-  <br/>
-  <br/>
   <h3 align="left">You can also toggle between light and dark mode!</h3>
-  <br/>
-  <br/>
-  <br/>
-  <br/>
-</p>
+</div>
 
 [react-badge]: https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB
 [react-url]: https://reactjs.org/

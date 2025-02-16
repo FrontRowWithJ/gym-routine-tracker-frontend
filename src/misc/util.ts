@@ -38,6 +38,7 @@ export const getCache = () => {
 export const getRoutinesLS = () => {
   const cache = getCache();
   const routines: RoutineData[] = Object.keys(cache).map((routineID) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { workouts, ...rest } = cache[routineID];
     return { ...rest, routineID: +routineID };
   });
@@ -68,6 +69,7 @@ export const setRoutinesLS = (routines: RoutineData[]) => {
 
 export const deleteRoutineLS = (routineData: RoutineData) => {
   const cache = getCache();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { [routineData.routineID]: toBeDeleted, ...rest } = cache;
   localStorage.setItem("cache", JSON.stringify(rest));
 };

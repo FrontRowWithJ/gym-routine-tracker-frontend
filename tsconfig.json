@@ -21,7 +21,7 @@
     "jsx": "preserve",
     "typeRoots": [
       "./index.d.ts",
-      "node_modules.old/@types"
+      "node_modules/@types"
     ],
     "paths": {
       "@/*": [
