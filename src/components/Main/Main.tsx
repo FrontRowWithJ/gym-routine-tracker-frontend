@@ -7,13 +7,6 @@ import { useTheme } from "@/components/ThemeContextProvider";
 import { Button } from "@/components/Button";
 import { Chart, Home, Workout, Dark, Light } from "@/resources/SVG";
 
-const Favicon = () => {
-  const [theme] = useTheme();
-  const link = document.querySelector("link[rel='icon']") as HTMLLinkElement;
-  link.href = `/favicon-${theme}.ico`;
-  return null;
-};
-
 const ThemeButton = () => {
   const [theme, setTheme] = useTheme();
   return (
@@ -33,31 +26,35 @@ const ModeButton = () => {
   );
 };
 
-export const Main = () => {
+const useHomeButton = () => {
   const [page, setPage] = useToggle("Routine", "Workout");
+  const HomeButton = () => (
+    <Button
+      onClick={() => {
+        setPage("Routine");
+        if (page === "Workout") animateBackground("reverse");
+      }}
+    >
+      <Home />
+    </Button>
+  );
+  return [page, setPage, HomeButton] as const;
+};
+
+export const Main = () => {
   const [userID, setUserID] = useUserState();
   const isLoggedIn = isUserLoggedIn(userID);
+  const [page, setPage, HomeButton] = useHomeButton();
   return (
-    <>
-      <Favicon />
-      <main className="main-page">
-        <div className="background"></div>
-        <nav>
-          <Button
-            onClick={() => {
-              setPage("Routine");
-              if (page === "Workout") animateBackground("reverse");
-            }}
-          >
-            <Home />
-          </Button>
-          <ModeButton />
-          <span>Trackout</span>
-          <ThemeButton />
-          <LoginMenu {...{ isLoggedIn, setUserID, userID }} />
-        </nav>
-        {<RoutinePage {...{ page, setPage, userID }} />}
-      </main>
-    </>
+    <main className="main-page">
+      <nav>
+        <HomeButton />
+        <ModeButton />
+        <span>Trackout</span>
+        <ThemeButton />
+        <LoginMenu {...{ isLoggedIn, setUserID, userID }} />
+      </nav>
+      {<RoutinePage {...{ page, setPage, userID }} />}
+    </main>
   );
 };

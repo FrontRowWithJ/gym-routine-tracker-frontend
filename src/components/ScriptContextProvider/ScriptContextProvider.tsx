@@ -1,24 +1,25 @@
 import { ScriptContextProviderProps } from "./types";
-import { createContext, useState, useEffect } from "react";
+import { createContext, useEffect, useState } from "react";
 
-function useLoadScript(src: string): boolean {
-  const [isScriptLoaded, setScriptState] = useState(false);
+export const ScriptContextProvider = (props: ScriptContextProviderProps) => {
+  const ScriptContext = createContext(true);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_, setIsScriptLoaded] = useState(false);
   useEffect(() => {
     const script = document.createElement("script");
-    script.onload = () => setScriptState(true);
-    script.onerror = () => setScriptState(false);
-    script.src = src;
+    script.src = props.src;
+    script.addEventListener("error", () => setIsScriptLoaded(false));
+    script.addEventListener("load", () => setIsScriptLoaded(true));
     script.async = script.defer = true;
     document.body.appendChild(script);
-    return () => void document.body.removeChild(script);
-  }, [src]);
-  return isScriptLoaded;
-}
-export const ScriptContextProvider = (props: ScriptContextProviderProps) => {
-  const ScriptContext = createContext<boolean>(false);
-  const isScriptLoaded = useLoadScript(props.src);
+    return () => {
+      setIsScriptLoaded(false);
+      document.body.removeChild(script);
+    };
+  }, [props.src]);
+
   return (
-    <ScriptContext.Provider value={isScriptLoaded}>
+    <ScriptContext.Provider value={true}>
       {props.children}
     </ScriptContext.Provider>
   );

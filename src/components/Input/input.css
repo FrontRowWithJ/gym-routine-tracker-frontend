@@ -16,7 +16,6 @@
   label {
     color: var(--label-color);
     font-family: "Roboto", "Helvetica", "Arial", sans-serif;
-    font-weight: 400;
     font-size: 1rem;
     line-height: 1.4375em;
     letter-spacing: 0.00938em;
@@ -39,7 +38,6 @@
   }
   > div {
     font-family: "Roboto", "Helvetica", "Arial", sans-serif;
-    font-weight: 400;
     font-size: 1rem;
     line-height: 1.4375;
     letter-spacing: 0.00938em;
@@ -126,7 +124,6 @@
     text-align: left;
     letter-spacing: 0.03333em;
     line-height: 1.66;
-    font-weight: 400;
     color: transparent;
     min-height: 1.25rem;
     display: flex;

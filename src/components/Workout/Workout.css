@@ -58,7 +58,6 @@
       width: fit-content;
     }
     span + span {
-      font-weight: normal;
       margin-top: 4px;
       font-size: 0.8rem;
       color: var(--label);

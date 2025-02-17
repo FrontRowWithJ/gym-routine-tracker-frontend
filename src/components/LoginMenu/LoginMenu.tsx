@@ -2,7 +2,6 @@ import { LoginMenuProps } from "./types";
 import { Login, Logout, PermanentBin } from "@/resources/SVG";
 import { GoogleButton } from "@/components/GoogleButton";
 import { ButtonMenu } from "@/components/ButtonMenu";
-import { ScriptContextProvider } from "../ScriptContextProvider";
 import {
   GymRoutineJWT,
   logout,
@@ -14,12 +13,12 @@ import {
 import { Button } from "@/components/Button";
 import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
 import { useErrorBanner } from "@/components/ErrorBanner";
+import { ScriptContextProvider } from "@/components/ScriptContextProvider";
 
 const getLoggedInData = (
   setErrorMessage: React.Dispatch<React.SetStateAction<string>>,
   userID: number,
-  closeDialog: (event: React.BaseSyntheticEvent) => void,
-  setUserID: React.Dispatch<React.SetStateAction<number>>
+  closeDialog: (event: React.BaseSyntheticEvent) => void
 ) => {
   return {
     title: "Permanently Delete Account?",
@@ -61,10 +60,11 @@ const getLoggedInData = (
     },
   };
 };
-
+const isCacheEmpty = () => {
+  const cache = localStorage.getItem("cache");
+  return cache === null || cache === "{}";
+};
 const getLoggedOutData = (
-  setErrorMessage: React.Dispatch<React.SetStateAction<string>>,
-  userID: number,
   closeDialog: (event: React.BaseSyntheticEvent) => void,
   setUserID: React.Dispatch<React.SetStateAction<number>>
 ) => {
@@ -89,7 +89,9 @@ export const LoginMenu = (props: LoginMenuProps) => {
   const { isLoggedIn, userID, setUserID } = props;
   const [openDialog, closeDialog, Dialog] = ConfirmDeleteDialog();
   const [ErrorBanner, setErrorMessage] = useErrorBanner();
-  const getData = isLoggedIn ? getLoggedInData : getLoggedOutData;
+  const data = isLoggedIn
+    ? getLoggedInData(setErrorMessage, userID, closeDialog)
+    : getLoggedOutData(closeDialog, setUserID);
   const {
     buttonIcon,
     title,
@@ -97,13 +99,13 @@ export const LoginMenu = (props: LoginMenuProps) => {
     loginLogoutButton,
     loginLogoutText,
     deleteAction,
-  } = getData(setErrorMessage, userID, closeDialog, setUserID);
+  } = data;
   return (
     <>
       <ErrorBanner />
       <ButtonMenu {...{ buttonIcon, isLoggedIn }}>
         {loginLogoutButton}
-        <Button onClick={openDialog}>
+        <Button onClick={openDialog} disabled={isCacheEmpty()}>
           <span>{loginLogoutText}</span>
           <PermanentBin />
         </Button>

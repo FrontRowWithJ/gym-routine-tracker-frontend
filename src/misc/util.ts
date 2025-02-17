@@ -188,19 +188,17 @@ export const animateBackground = (
   direction: "forwards" | "reverse" = "forwards"
 ) => {
   const controller = new AbortController();
-  const main = document.getElementsByClassName(
-    "main-page"
-  )![0] as HTMLDivElement;
+  const body = document.getElementById("root")!;
   const classNames = ["domain-expansion", `animate-${direction}`];
-  main.addEventListener(
+  body.addEventListener(
     "animationend",
     () => {
-      main.classList.remove(...classNames);
+      body.classList.remove(...classNames);
       controller.abort();
     },
     { signal: controller.signal }
   );
-  main.classList.add(...classNames);
+  body.classList.add(...classNames);
 };
 
 export const hashString = (value: string) => {
