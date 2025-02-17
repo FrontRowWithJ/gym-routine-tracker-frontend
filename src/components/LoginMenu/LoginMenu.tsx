@@ -60,10 +60,7 @@ const getLoggedInData = (
     },
   };
 };
-const isCacheEmpty = () => {
-  const cache = localStorage.getItem("cache");
-  return cache === null || cache === "{}";
-};
+
 const getLoggedOutData = (
   closeDialog: (event: React.BaseSyntheticEvent) => void,
   setUserID: React.Dispatch<React.SetStateAction<number>>
@@ -105,7 +102,7 @@ export const LoginMenu = (props: LoginMenuProps) => {
       <ErrorBanner />
       <ButtonMenu {...{ buttonIcon, isLoggedIn }}>
         {loginLogoutButton}
-        <Button onClick={openDialog} disabled={isCacheEmpty()}>
+        <Button onClick={openDialog}>
           <span>{loginLogoutText}</span>
           <PermanentBin />
         </Button>
