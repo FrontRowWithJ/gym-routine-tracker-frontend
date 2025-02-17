@@ -1,20 +1,17 @@
 .error-banner {
-  z-index: 1;
   position: fixed;
-  margin: 1rem;
-  border-radius: 8px;
-  top: 0;
+  border-radius: 4px;
+  inset: 1rem;
   width: calc(100% - 2rem);
   height: 3rem;
   background-color: #bc0117;
   display: flex;
   align-items: center;
   padding: 0 1rem;
-
   svg {
-    fill: white;
-    height: 50%;
     cursor: pointer;
+    height: 50%;
+    fill: white;
   }
 
   span {
@@ -22,15 +19,9 @@
     margin-left: 1rem;
     color: white;
   }
-
   button {
-    aspect-ratio: 1 / 1;
     height: calc(3rem * 0.75);
     width: calc(3rem * 0.75);
-    background-color: transparent;
-    border-radius: 8px;
-    box-shadow: none;
-
     svg {
       width: 100%;
       height: 100%;

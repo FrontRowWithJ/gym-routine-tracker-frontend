@@ -3,29 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@craco/craco": "^5.9.0",
-    "@testing-library/jest-dom": "^5.17.0",
-    "@testing-library/react": "^16.1.0",
-    "@testing-library/user-event": "^13.5.0",
-    "@types/jest": "^27.5.2",
-    "@types/node": "^16.18.113",
-    "@types/react": "^19.0.6",
-    "@types/react-dom": "19.0.2",
-    "babel-plugin-react-compiler": "^19.0.0-beta-201e55d-20241215",
-    "boolbase": "^1.0.0",
-    "css-select": "^5.1.0",
-    "eslint": "^8.57.1",
-    "eslint-config-react-app": "^7.0.1",
-    "eslint-plugin-react-compiler": "^19.0.0-beta-201e55d-20241215",
+    "js-video-url-parser": "^0.5.1",
     "jssha": "^3.3.1",
-    "md5": "^2.3.0",
-    "nth-check": "^2.1.1",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "react-scripts": "^5.0.1",
-    "react-youtube": "^10.1.0",
-    "typescript": "^5.7.2",
-    "web-vitals": "^2.1.4"
+    "react-dom": "^19.0.0"
   },
   "scripts": {
     "start": "craco start",
@@ -39,6 +20,7 @@
       "react-app/jest"
     ]
   },
+  "cracoConfig": "craco.config.ts",
   "browserslist": {
     "production": [
       ">0.2%",
@@ -52,6 +34,16 @@
     ]
   },
   "devDependencies": {
-    "@types/md5": "^2.3.5"
+    "@babel/eslint-parser": "^7.26.8",
+    "@craco/craco": "^5.9.0",
+    "@eslint/js": "^9.20.0",
+    "@types/node": "^16.18.113",
+    "@types/react": "^19.0.6",
+    "@types/react-dom": "19.0.2",
+    "craco": "^0.0.3",
+    "eslint": "^9.20.1",
+    "eslint-config-react-app": "^7.0.1",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.24.0"
   }
 }

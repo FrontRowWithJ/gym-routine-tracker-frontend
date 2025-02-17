@@ -1,31 +1,35 @@
 import { RoutineProps } from "./types";
 import "./Routine.css";
-import { RoutineIcon, ThreeDots } from "@/resources/SVG";
+import { DottedPattern, Settings } from "@/resources/SVG";
 import { Button } from "@/components/Button";
 import { CreateOrEditRoutineDialog } from "@/components/CreateOrEditRoutineDialog";
-import { genIconProps } from "@/misc";
+import { animateBackground } from "@/misc";
 
 export const Routine = (props: RoutineProps) => {
   const [openDialog, Dialog] = CreateOrEditRoutineDialog();
-  const routineIconProps = genIconProps(props.routineData.routineName);
   const workoutCount = props.routineData.workoutCount;
+
   return (
     <>
-      <article className="routine" onClick={props.setPage}>
-        <Button className="edit-button" onClick={openDialog}>
-          <ThreeDots className="action-button-icon" />
+      <article
+        className="routine"
+        onClick={() => {
+          animateBackground();
+          props.setPage();
+        }}
+      >
+        <Button className="frosted-glass" onClick={openDialog}>
+          <Settings />
         </Button>
-
-        <RoutineIcon {...routineIconProps} />
-        <article>
+        <DottedPattern name={props.routineData.routineName} />
+        <article className="frosted-glass">
           <header>{props.routineData.routineName}</header>
           <h5>{`${workoutCount} Workout${workoutCount === 1 ? "" : "s"}`}</h5>
         </article>
       </article>
-
       <Dialog
         label="Edit"
-        backgroundColor="brown"
+        className="edit-routine-dialog"
         title="Permanently Delete Routine?"
         subtitle="The routine and it's associated workouts will be permanently deleted."
         PUT={props.PUT}

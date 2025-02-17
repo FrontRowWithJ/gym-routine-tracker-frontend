@@ -21,7 +21,7 @@
     "jsx": "preserve",
     "typeRoots": [
       "./index.d.ts",
-      "./node_modules/@types"
+      "node_modules/@types"
     ],
     "paths": {
       "@/*": [
@@ -32,6 +32,6 @@
   "include": [
     "src",
     "**/*.ts",
-    "**/*.tsx",
+    "**/*.tsx", "craco.config.ts",
   ]
 }

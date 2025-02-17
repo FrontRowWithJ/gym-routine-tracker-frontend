@@ -1,25 +1,97 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "Trackout",
+  "name": "Trackout",
+  "description": "Gym Routine Tracking App",
+  "categories": [
+    "health",
+    "fitness",
+    "productivity",
+    "lifestyle",
+    "personalization",
+    "utilities"
+  ],
   "icons": [
     {
-      "src": "favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
+      "src": "favicon-dark.ico",
+      "sizes": "48x48 32x32 16x16",
+      "type": "image/x-icon",
+      "purpose": "any"
     },
     {
-      "src": "logo192.png",
+      "src": "logo-light192.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "192x192",
+      "purpose": "any"
     },
     {
-      "src": "logo512.png",
+      "src": "logo-dark192.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "logo-light512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
     }
   ],
-  "start_url": ".",
+  "screenshots": [
+    {
+      "src": "create-routine.png",
+      "sizes": "410x900",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Create a routine."
+    },
+    {
+      "src": "create-workout.png",
+      "sizes": "410x900",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Create a workout."
+    },
+    {
+      "src": "edit-routine.png",
+      "sizes": "410x900",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Edit an existing routine's name."
+    },
+    {
+      "src": "edit-workout.png",
+      "sizes": "410x900",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Edit an existing workout's name, set count, rep count, unit, increment, weight and tutorial link."
+    },
+    {
+      "src": "dark-mode.png",
+      "sizes": "410x900",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Set the app to dark mode!"
+    },
+    {
+      "src": "light-mode.png",
+      "sizes": "410x900",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Set the app to light mode!"
+    }
+  ],
+  "start_url": "https://machrino.me",
+  "id": "https://machrino.me",
+  "scope": "https://machrino.me",
+  "launch_handler": {
+    "client_mode": [
+      "auto"
+    ]
+  },
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "display_override": "minimal-ui",
+  "theme_color": "#FFFFFF",
+  "background_color": "#000000",
+  "orientation": "portrait-primary",
+  "prefer_related_applications": false
 }

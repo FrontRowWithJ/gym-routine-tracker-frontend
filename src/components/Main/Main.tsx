@@ -1,39 +1,60 @@
 import "./Main.css";
-import { useState } from "react";
-import { MainProps } from "./types";
-import { HomeLink } from "@/components/HomeLink";
 import { RoutinePage } from "@/components/RoutinePage";
-import { isUserLoggedIn, Page } from "@/misc";
-import { Divider } from "@/components/Divider";
-import { SettingsMenu } from "@/components/SettingsMenu";
+import { animateBackground, isUserLoggedIn } from "@/misc";
 import { LoginMenu } from "@/components/LoginMenu";
-import { ChartOrWorkoutButton } from "@/components/ChartOrWorkoutButton";
-import { useUserState } from "@/misc/hooks";
-import { LogoutMenu } from "@/components/LogoutMenu";
+import { useToggle, useUserState } from "@/misc/hooks";
+import { useTheme } from "@/components/ThemeContextProvider";
+import { Button } from "@/components/Button";
+import { Chart, Home, Workout, Dark, Light } from "@/resources/SVG";
 
-export const Main = (props: MainProps) => {
-  const [currPage, setPage] = useState<Page>("Routine");
-  const [mode, setMode] = useState<"Chart" | "Workout">("Workout");
+const ThemeButton = () => {
+  const [theme, setTheme] = useTheme();
+  return (
+    <Button onClick={setTheme} className="theme-button">
+      <Dark translate={theme === "dark" ? "0 0" : "0 150%"} />
+      <Light translate={theme === "dark" ? "0 150%" : "0 0"} />
+    </Button>
+  );
+};
+
+const ModeButton = () => {
+  const [mode, setMode] = useToggle("Workout", "Chart");
+  return (
+    <Button onClick={() => setMode()}>
+      {mode === "Chart" ? <Chart /> : <Workout />}
+    </Button>
+  );
+};
+
+const useHomeButton = () => {
+  const [page, setPage] = useToggle("Routine", "Workout");
+  const HomeButton = () => (
+    <Button
+      onClick={() => {
+        setPage("Routine");
+        if (page === "Workout") animateBackground("reverse");
+      }}
+    >
+      <Home />
+    </Button>
+  );
+  return [page, setPage, HomeButton] as const;
+};
+
+export const Main = () => {
   const [userID, setUserID] = useUserState();
   const isLoggedIn = isUserLoggedIn(userID);
+  const [page, setPage, HomeButton] = useHomeButton();
   return (
     <main className="main-page">
       <nav>
-        <HomeLink
-          setPage={() => setPage("Routine")}
-          page={currPage}
-          titleName={currPage}
-        />
-        <ChartOrWorkoutButton
-          mode={mode}
-          toggleMode={() => setMode(mode === "Chart" ? "Workout" : "Chart")}
-        />
-        <span>{currPage}</span>
-        <SettingsMenu isLoggedIn={isLoggedIn} userID={userID} />
-        {isLoggedIn ? <LogoutMenu /> : <LoginMenu setUserID={setUserID} />}
+        <HomeButton />
+        <ModeButton />
+        <span>Trackout</span>
+        <ThemeButton />
+        <LoginMenu {...{ isLoggedIn, setUserID, userID }} />
       </nav>
-      <Divider style={{ marginBottom: "1rem" }} width="100%" margin=".5rem" />
-      <RoutinePage page={currPage} setPage={setPage} userID={userID} />
+      {<RoutinePage {...{ page, setPage, userID }} />}
     </main>
   );
 };

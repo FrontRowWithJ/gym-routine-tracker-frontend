@@ -13,7 +13,7 @@ const allowedAcceptTypes: { [key in AcceptType]: "" } = {
   "application/x-empty": "",
   "text/plain": "",
 };
-// FEATURE add telemetry
+
 export const fetchWrapper = <T>(
   input: RequestInfo | URL,
   {

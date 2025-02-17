@@ -3,7 +3,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: black;
+  background-color: var(--svg-fill);
 }
 
 .divider.horizontal {

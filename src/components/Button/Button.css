@@ -1,6 +1,10 @@
 .ui-button {
-  height: 40px;
-  border-radius: 24px;
+  aspect-ratio: 1 / 1;
+  width: 3rem;
+  height: 3rem;
+  padding: 0;
+  background-color: transparent;
+  border-radius: 4px;
   text-align: center;
   display: flex;
   justify-content: center;
@@ -8,7 +12,14 @@
   cursor: pointer;
   border: 0px;
   position: relative;
-  box-shadow: rgba(0, 0, 0, 0.16) 0px 3px 6px, rgba(0, 0, 0, 0.23) 0px 3px 6px;
+  color: var(--svg-fill);
+  svg,
+  img {
+    width: 50%;
+    height: 50%;
+    fill: var(--svg-fill);
+    border-radius: 1rem;
+  }
 }
 
 .ui-disabled {

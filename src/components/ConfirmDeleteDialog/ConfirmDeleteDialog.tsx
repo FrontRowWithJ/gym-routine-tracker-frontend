@@ -28,10 +28,10 @@ export const ConfirmDeleteDialog = () => {
       }}
       className="confirm-delete-dialog"
     >
-      <article>
+      <article className="frosted-glass">
         <PermanentBin />
         <h1>{props.title}</h1>
-        <h5>{props.subtitle}</h5>
+        <h4>{props.subtitle}</h4>
         <section>
           <Button onClick={props.deleteAction}>Delete</Button>
           <Button onClick={closeDialog}>Cancel</Button>
@@ -39,6 +39,5 @@ export const ConfirmDeleteDialog = () => {
       </article>
     </dialog>
   );
-
   return [openDialog, closeDialog, Dialog] as const;
 };

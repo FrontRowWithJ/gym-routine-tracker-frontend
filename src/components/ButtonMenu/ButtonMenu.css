@@ -7,59 +7,73 @@
     height: 3rem;
     padding: 0;
     background-color: transparent;
+  }
 
-    svg {
-      width: 50%;
-      height: 50%;
-      fill: black;
+  menu {
+    position: fixed;
+    right: 0;
+    top: 0;
+    z-index: 3;
+    height: 100%;
+    width: 70%;
+    transition: translate cubic-bezier(0.33, 1, 0.68, 1) 250ms;
+    margin: 0;
+    padding: 0;
+    border-radius: 4px 0 0 4px;
+    header {
+      width: 100%;
+      display: flex;
+      button {
+        width: 2.5rem;
+        height: 2.5rem;
+        margin: 0.5rem 0.5rem 0 auto;
+      }
+    }
+    .divider {
+      background-color: var(--label-color);
+    }
+    article {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      button {
+        display: grid;
+        grid-template: 1fr / 3rem auto;
+        width: calc(100% - 1rem);
+        justify-content: unset; /* override Button.ui-button*/
+        height: 3rem;
+        svg {
+          grid-area: 1 / 1 / 2 / 2;
+          place-self: center;
+          width: 60%;
+          height: 60%;
+        }
+        span {
+          grid-area: 1 / 2 / 2 / 3;
+          height: 100%;
+          font-size: 14px;
+          display: flex;
+          justify-content: flex-start;
+          align-items: center;
+        }
+      }
     }
   }
 
-  .button-menu {
-    list-style-type: none;
-    display: flex;
-    flex-direction: column;
-    position: absolute;
-    top: calc(100% + 0.25rem);
-    right: 0;
+  .backdrop {
+    position: fixed;
+    inset: 0;
     z-index: 2;
-    margin: 0;
-    padding: 0;
-    background-color: #39304a;
-    border-radius: 1rem;
-    padding: 1rem;
-    width: max-content;
+    animation: blur 250ms cubic-bezier(0.33, 1, 0.68, 1) 0s 1 normal forwards;
+  }
+}
 
-    button {
-      height: 30pt;
-      align-items: center;
-      display: grid;
-      grid-template-columns: 1fr 30pt;
-      grid-template-rows: 30pt;
-      border-radius: 4px;
-      background-color: white;
-      color: black;
-      border: 0;
-      padding: 0;
-      width: 100%;
-      box-shadow: none;
-      svg {
-        height: 100%;
-        width: 100%;
-        grid-column: 2 / 3;
-        place-self: center;
-      }
-
-      span {
-        position: relative;
-        display: flex;
-        justify-content: flex-start;
-        align-items: center;
-        font-weight: 400;
-        height: 100%;
-        padding-left: 30pt;
-        min-width: 6rem;
-      }
-    }
+@keyframes blur {
+  from {
+    backdrop-filter: blur(0px);
+  }
+  to {
+    backdrop-filter: blur(5px);
   }
 }
