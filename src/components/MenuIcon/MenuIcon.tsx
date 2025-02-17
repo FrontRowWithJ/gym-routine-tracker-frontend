@@ -1,6 +1,6 @@
 import { MenuIconProps } from "./types";
 import "./MenuIcon.css";
-import { useTheme } from "../ThemeContextProvider";
+import { useTheme } from "@/components/ThemeContextProvider";
 import { GymRoutineJWT, parseJWT } from "@/misc";
 import { Logo } from "@/resources/SVG";
 

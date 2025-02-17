@@ -5,7 +5,7 @@ import { RadioGroup } from "@/components/RadioGroup";
 import { useReducer } from "react";
 import { FormDialog } from "@/components/FormDialog";
 import { validateName, WorkoutData } from "@/misc";
-import { Counter } from "../Counter";
+import { Counter } from "@/components/Counter";
 import UrlParser from "js-video-url-parser";
 
 const reducer = (state: WorkoutData, { type, value }: Action): WorkoutData => {
