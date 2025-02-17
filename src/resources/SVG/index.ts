@@ -18,3 +18,4 @@ export * from "./Warning";
 export * from "./Home";
 export * from "./DottedPattern";
 export * from "./PlayButton";
+export * from "./Logo";
