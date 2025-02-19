@@ -31,10 +31,10 @@ const GET = <T>(
   });
 };
 
-const PUT = <T, S extends keyof T>(
+  const PUT = <T>(
   URL: string,
   userID: number,
-  idKey: S extends `${string}ID` ? S : never,
+  cmp: (a: T, b: T) => boolean,
   data: T,
   body: { [K in keyof T]?: T[K] },
   setStateLS: (data: T) => Promise<void>,
@@ -44,9 +44,7 @@ const PUT = <T, S extends keyof T>(
   const updateLocalAfterPut = (data: T) => {
     setStateLS(data).then(() => {
       setState((stateList) => {
-        const index = stateList.findIndex(
-          (item) => item[idKey] === data[idKey]
-        );
+        const index = stateList.findIndex((item) => cmp(item, data));
         const start = stateList.slice(0, index);
         const end = stateList.slice(index + 1);
         return [...start, data, ...end];
@@ -116,10 +114,10 @@ const POST = <T extends { indexNumber: number }, S extends keyof T>(
   }
 };
 
-const DELETE = <T, S extends keyof T>(
+const DELETE = <T>(
   URL: string,
   userID: number,
-  idKey: S extends `${string}ID` ? S : never,
+  cmp: (a: T, b: T) => boolean,
   data: T,
   deleteLS: (data: T) => Promise<void>,
   setState: (value: React.SetStateAction<T[]>) => void,
@@ -129,7 +127,7 @@ const DELETE = <T, S extends keyof T>(
   const updateAfterDelete = (obj: T) => {
     deleteLS(obj).then(() => {
       setState((stateList) => {
-        return stateList.filter((item) => item[idKey] !== obj[idKey]);
+        return stateList.filter((item) => cmp(item, obj));
       });
       setTrigger?.({});
     });
@@ -209,7 +207,7 @@ export const useWorkouts = (
       PUT(
         `${ORIGIN}/v1/users/${userID}/routines/${routineID}/workouts/${workoutID}`,
         userID,
-        "workoutID",
+        (a, b) => a.workoutID === b.workoutID,
         workout,
         body,
         putWorkoutIDB,
@@ -230,7 +228,7 @@ export const useWorkouts = (
     DELETE(
       `${ORIGIN}/v1/users/${userID}/routines/${routineID}/workouts/${workoutID}`,
       userID,
-      "workoutID",
+      (a, b) => a.workoutID !== b.workoutID,
       workout,
       deleteWorkoutIDB,
       setWorkouts,
@@ -289,7 +287,7 @@ export const useRoutines = (
     PUT(
       `${ORIGIN}/v1/users/${userID}/routines/${routineID}`,
       userID,
-      "routineID",
+      (a, b) => a.routineID === b.routineID,
       routine,
       body,
       setRoutineIDB,
@@ -303,7 +301,7 @@ export const useRoutines = (
     DELETE(
       `${ORIGIN}/v1/users/${userID}/routines/${routineID}`,
       userID,
-      "routineID",
+      (a, b) => a.routineID !== b.routineID,
       routine,
       deleteRoutineIDB,
       setRoutines,

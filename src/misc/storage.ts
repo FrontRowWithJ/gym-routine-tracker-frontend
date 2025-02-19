@@ -234,7 +234,10 @@ const deleteWorkoutsIDB = async (routineID: number) => {
   const db = await openDB();
   return new Promise<void>((resolve, reject) => {
     const tx = db.transaction("workouts", "readwrite");
-    tx.oncomplete = () => resolve();
+    tx.oncomplete = () => {
+      resolve();
+      console.log("foo");
+    };
     tx.onerror = () => reject(tx.error);
     const deleteCursor = tx
       .objectStore("workouts")
@@ -250,32 +253,28 @@ const deleteWorkoutsIDB = async (routineID: number) => {
   }).finally(() => db.close());
 };
 
-export const deleteRoutineIDB = async ({ routineID }: RoutineData) => {
+const deleteRecordIDB = async (
+  id: number,
+  storeName: string,
+  cb: (resolve: (value: void | PromiseLike<void>) => void) => void
+) => {
   const db = await openDB();
   return new Promise<void>((resolve, reject) => {
-    const tx = db.transaction("routines", "readwrite");
-    tx.oncomplete = () => deleteWorkoutsIDB(routineID).then(resolve);
+    const tx = db.transaction(storeName, "readwrite");
+    tx.oncomplete = () => cb(resolve);
     tx.onerror = () => reject(tx.error);
-    tx.objectStore("routines").delete(routineID);
-  }).finally(() => db.close());
+    tx.objectStore(storeName).delete(id);
+  });
 };
 
-export const deleteWorkoutIDB = async ({
-  workoutID,
-  routineID,
-}: WorkoutData) => {
-  const db = await openDB();
-  return new Promise<void>((resolve, reject) => {
-    const tx = db.transaction("workouts", "readwrite");
-    tx.oncomplete = async () => {
-      const routine = await getRoutineIDB(routineID);
-      await setRoutineIDB({
-        ...routine,
-        workoutCount: routine.workoutCount - 1,
-      });
-      resolve();
-    };
-    tx.onerror = () => reject(tx.error);
-    tx.objectStore("workouts").delete(workoutID);
-  }).finally(() => db.close());
-};
+export const deleteRoutineIDB = async ({ routineID }: RoutineData) =>
+  deleteRecordIDB(routineID, "routines", (resolve) =>
+    deleteWorkoutsIDB(routineID).then(resolve)
+  );
+
+export const deleteWorkoutIDB = async ({ workoutID, routineID }: WorkoutData) =>
+  deleteRecordIDB(workoutID, "workouts", async (resolve) => {
+    const routine = await getRoutineIDB(routineID);
+    await setRoutineIDB({ ...routine, workoutCount: routine.workoutCount - 1 });
+    resolve();
+  });
