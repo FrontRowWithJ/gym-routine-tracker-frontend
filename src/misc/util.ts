@@ -1,117 +1,15 @@
-import {
-  Theme,
-  WorkoutDataCache,
-  RoutineData,
-  WorkoutData,
-  RemoveOptional,
-} from "./types";
+import { RemoveOptional } from "./types";
 import { OFFLINE_USER_ID } from "./constants";
+import { deleteRoutinesIDB } from "./storage";
 import jsSHA from "jssha";
-
-export const getTheme: () => Theme = () => {
-  const theme = window.matchMedia("(prefers-color-scheme: dark)").matches
-    ? "dark"
-    : "light";
-  return localStorage.getItem("theme") ?? theme;
-};
 
 export const getYoutubeThumbnail = (youtubeID: string) => {
   if (youtubeID === "") return "" as const;
   return `https://i3.ytimg.com/vi/${youtubeID}/mqdefault.jpg` as const;
 };
 
-//! Validators
-
 export const validateName = (value: string): string =>
   value.length > 0 ? "" : "Name can't be empty.";
-
-export const getCache = () => {
-  const cache = localStorage.getItem("cache");
-  if (cache === null) {
-    localStorage.setItem("cache", "{}");
-    return {};
-  }
-  return JSON.parse(cache) as WorkoutDataCache;
-};
-
-export const getRoutinesLS = () => {
-  const cache = getCache();
-  const routines: RoutineData[] = Object.keys(cache).map((routineID) => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { workouts, ...rest } = cache[routineID];
-    return { ...rest, routineID: +routineID };
-  });
-  routines.sort((a, b) => a.indexNumber - b.indexNumber);
-  return routines;
-};
-
-export const setRoutineLS = ({ routineID, ...rest }: RoutineData) => {
-  const cache = getCache();
-  if (routineID in cache) {
-    cache[routineID] = { ...cache[routineID], ...rest };
-  } else {
-    cache[routineID] = { ...rest, workouts: [] };
-  }
-  localStorage.setItem("cache", JSON.stringify(cache));
-};
-
-export const setRoutinesLS = (routines: RoutineData[]) => {
-  const cache = getCache();
-  const newCache: WorkoutDataCache = {};
-  for (const routine of routines) {
-    const { routineID } = routine;
-    const workouts = cache?.[routineID]?.workouts ?? [];
-    newCache[routineID] = { ...routine, workouts };
-  }
-  localStorage.setItem("cache", JSON.stringify(newCache));
-};
-
-export const deleteRoutineLS = (routineData: RoutineData) => {
-  const cache = getCache();
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { [routineData.routineID]: toBeDeleted, ...rest } = cache;
-  localStorage.setItem("cache", JSON.stringify(rest));
-};
-
-export const getWorkoutsLS = (routineID: number): WorkoutData[] => {
-  const cache = getCache();
-  const workouts = cache[routineID].workouts;
-  workouts.sort((a, b) => a.indexNumber - b.indexNumber);
-  return workouts;
-};
-
-export const setWorkoutLS = (workoutData: WorkoutData) => {
-  const cache = getCache();
-  const { workouts } = cache[workoutData.routineID];
-  const index = workouts.findIndex(
-    (workout) => workout.workoutID === workoutData.workoutID
-  );
-  if (index === -1) {
-    cache[workoutData.routineID].workoutCount++;
-    workouts.push(workoutData);
-  } else workouts[index] = workoutData;
-  localStorage.setItem("cache", JSON.stringify(cache));
-};
-
-export const setWorkoutsLS = (workouts: WorkoutData[]) => {
-  if (workouts.length === 0) return;
-  for (let i = 0; i < workouts.length; i++)
-    if (workouts[i].routineID !== workouts[0].routineID)
-      throw new Error("Routines in the array must all be the same");
-  const cache = getCache();
-  cache[workouts[0].routineID].workouts = workouts;
-  localStorage.setItem("cache", JSON.stringify(cache));
-};
-
-export const deleteWorkoutLS = (workoutData: WorkoutData) => {
-  const cache = getCache();
-  const { workouts } = cache[workoutData.routineID];
-  cache[workoutData.routineID].workoutCount--;
-  cache[workoutData.routineID].workouts = workouts.filter(
-    (workout) => workout.workoutID !== workoutData.workoutID
-  );
-  localStorage.setItem("cache", JSON.stringify(cache));
-};
 
 export const generateRandomString = (numOfBytes: number) => {
   const randomValues = crypto.getRandomValues(new Uint8Array(numOfBytes));
@@ -179,26 +77,27 @@ export const applyDefaultRequestInitParams = (
 };
 
 export const logout = () => {
-  localStorage.removeItem("auth-token");
-  localStorage.removeItem("cache");
-  window.location.href = window.location.origin;
+  deleteRoutinesIDB().then(() => {
+    localStorage.removeItem("auth-token");
+    localStorage.removeItem("cache");
+    window.location.href = window.location.origin;
+  });
 };
 
 export const animateBackground = (
   direction: "forwards" | "reverse" = "forwards"
 ) => {
   const controller = new AbortController();
-  const body = document.getElementById("root")!;
   const classNames = ["domain-expansion", `animate-${direction}`];
-  body.addEventListener(
+  document.body.addEventListener(
     "animationend",
     () => {
-      body.classList.remove(...classNames);
+      document.body.classList.remove(...classNames);
       controller.abort();
     },
     { signal: controller.signal }
   );
-  body.classList.add(...classNames);
+  document.body.classList.add(...classNames);
 };
 
 export const hashString = (value: string) => {

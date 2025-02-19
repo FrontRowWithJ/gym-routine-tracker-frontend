@@ -1,5 +1,5 @@
 import { ThemeContextProviderProps } from "./types";
-import { Theme, getTheme, MATCH_MEDIA_QUERY, NOOP } from "@/misc";
+import { Theme, NOOP } from "@/misc";
 import {
   createContext,
   useState,
@@ -7,6 +7,13 @@ import {
   useCallback,
   useContext,
 } from "react";
+
+const MATCH_MEDIA_QUERY = "(prefers-color-scheme: dark)";
+
+const getTheme = (): Theme => {
+  const theme = window.matchMedia(MATCH_MEDIA_QUERY).matches ? "dark" : "light";
+  return localStorage.getItem("theme") ?? theme;
+};
 
 const _useTheme = () => {
   const [theme, _setTheme] = useState<Theme>(getTheme());

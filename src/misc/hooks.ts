@@ -1,30 +1,29 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import {
-  getWorkoutsLS,
-  setWorkoutLS,
-  setWorkoutsLS,
-  deleteWorkoutLS,
-  getRoutinesLS,
-  setRoutineLS,
-  deleteRoutineLS,
-  setRoutinesLS,
-  isUserLoggedIn,
-  parseJWT,
-} from "./util";
+  getWorkoutsIDB,
+  addWorkoutIDB,
+  putWorkoutIDB,
+  setWorkoutsIDB,
+  deleteWorkoutIDB,
+  getRoutinesIDB,
+  setRoutineIDB,
+  deleteRoutineIDB,
+  setRoutinesIDB,
+} from "./storage";
+import { isUserLoggedIn, parseJWT } from "./util";
 import { GymRoutineJWT, RoutineData, WorkoutData } from "./types";
 import { DEFAULT_ERROR_MESSAGE, OFFLINE_USER_ID, ORIGIN } from "./constants";
 import { debounce, fetchWrapper } from "./fetchHandler";
 
 const GET = <T>(
   URL: string,
-  setLS: (data: T) => void,
+  setLS: (data: T) => Promise<void>,
   setState: (value: React.SetStateAction<T>) => void,
   setErrorMessage: React.Dispatch<React.SetStateAction<string>>
 ) => {
   fetchWrapper<T>(URL, { method: "GET" }).then(({ data, error }) => {
     if (error === null) {
-      setLS(data);
-      setState(data);
+      setLS(data).then(() => setState(data));
     } else {
       console.error(error);
       setErrorMessage(DEFAULT_ERROR_MESSAGE);
@@ -38,17 +37,20 @@ const PUT = <T, S extends keyof T>(
   idKey: S extends `${string}ID` ? S : never,
   data: T,
   body: { [K in keyof T]?: T[K] },
-  setStateLS: (data: T) => void,
+  setStateLS: (data: T) => Promise<void>,
   setState: (value: React.SetStateAction<T[]>) => void,
   setErrorMessage: React.Dispatch<React.SetStateAction<string>>
 ) => {
   const updateLocalAfterPut = (data: T) => {
-    setStateLS(data);
-    setState((stateList) => {
-      const index = stateList.findIndex((item) => item[idKey] === data[idKey]);
-      const start = stateList.slice(0, index);
-      const end = stateList.slice(index + 1);
-      return [...start, data, ...end];
+    setStateLS(data).then(() => {
+      setState((stateList) => {
+        const index = stateList.findIndex(
+          (item) => item[idKey] === data[idKey]
+        );
+        const start = stateList.slice(0, index);
+        const end = stateList.slice(index + 1);
+        return [...start, data, ...end];
+      });
     });
   };
 
@@ -77,18 +79,22 @@ const POST = <T extends { indexNumber: number }, S extends keyof T>(
   body: { [K in keyof T]?: T[K] },
   data: T,
   records: T[],
-  setStateLS: (data: T) => void,
+  setStateLS: (data: T) => Promise<void>,
   setState: (value: React.SetStateAction<T[]>) => void,
   setErrorMessage: React.Dispatch<React.SetStateAction<string>>,
-  trigger?: (obj: {}) => void
+  setTrigger?: (obj: {}) => void
 ) => {
+  const updateLocalAfterPost = (data: T) => {
+    setStateLS(data).then(() => {
+      setState((stateList) => [...stateList, data]);
+      setTrigger?.({});
+    });
+  };
   if (isUserLoggedIn(userID)) {
     fetchWrapper<T>(URL, { method: "POST", body: JSON.stringify(body) }).then(
       ({ data, error }) => {
         if (error === null) {
-          setStateLS(data);
-          setState((stateList) => [...stateList, data]);
-          trigger?.({});
+          updateLocalAfterPost(data);
         } else {
           console.error(error);
           setErrorMessage(DEFAULT_ERROR_MESSAGE);
@@ -106,9 +112,7 @@ const POST = <T extends { indexNumber: number }, S extends keyof T>(
         : Math.max(...records.map((d) => d.indexNumber));
     indexNumber = ((indexNumber / 1024) | 0) * 1024 + 1024;
     const newData = { ...data, indexNumber, [idKey]: id };
-    setStateLS(newData);
-    setState((stateList) => [...stateList, newData]);
-    trigger?.({});
+    updateLocalAfterPost(newData);
   }
 };
 
@@ -117,14 +121,17 @@ const DELETE = <T, S extends keyof T>(
   userID: number,
   idKey: S extends `${string}ID` ? S : never,
   data: T,
-  deleteLS: (data: T) => void,
+  deleteLS: (data: T) => Promise<void>,
   setState: (value: React.SetStateAction<T[]>) => void,
-  setErrorMessage: React.Dispatch<React.SetStateAction<string>>
+  setErrorMessage: React.Dispatch<React.SetStateAction<string>>,
+  setTrigger?: (obj: {}) => void
 ) => {
   const updateAfterDelete = (obj: T) => {
-    deleteLS(obj);
-    setState((stateList) => {
-      return stateList.filter((item) => item[idKey] !== obj[idKey]);
+    deleteLS(obj).then(() => {
+      setState((stateList) => {
+        return stateList.filter((item) => item[idKey] !== obj[idKey]);
+      });
+      setTrigger?.({});
     });
   };
   if (isUserLoggedIn(userID)) {
@@ -150,12 +157,15 @@ export const useWorkouts = (
   setTrigger: React.Dispatch<React.SetStateAction<{}>>,
   setErrorMessage: React.Dispatch<React.SetStateAction<string>>
 ) => {
-  const [workouts, setWorkouts] = useState(getWorkoutsLS(routineID));
+  const [workouts, setWorkouts] = useState<WorkoutData[]>([]);
+  useEffect(() => {
+    getWorkoutsIDB(routineID).then((workouts) => setWorkouts(workouts));
+  }, [routineID]);
   useEffect(() => {
     if (isUserLoggedIn(userID)) {
       GET(
         `${ORIGIN}/v1/users/${userID}/routines/${routineID}/workouts`,
-        setWorkoutsLS,
+        setWorkoutsIDB,
         setWorkouts,
         setErrorMessage
       );
@@ -172,7 +182,7 @@ export const useWorkouts = (
       body,
       workout,
       workouts,
-      setWorkoutLS,
+      addWorkoutIDB,
       setWorkouts,
       setErrorMessage,
       setTrigger
@@ -180,14 +190,15 @@ export const useWorkouts = (
   };
 
   const updateLocalAfterPut = (workout: WorkoutData) => {
-    setWorkoutLS(workout);
-    setWorkouts((workouts) => {
-      const index = workouts.findIndex(
-        ({ workoutID }) => workoutID === workout.workoutID
-      );
-      const start = workouts.slice(0, index);
-      const end = workouts.slice(index + 1);
-      return [...start, workout, ...end];
+    putWorkoutIDB(workout).then(() => {
+      setWorkouts((workouts) => {
+        const index = workouts.findIndex(
+          ({ workoutID }) => workoutID === workout.workoutID
+        );
+        const start = workouts.slice(0, index);
+        const end = workouts.slice(index + 1);
+        return [...start, workout, ...end];
+      });
     });
   };
 
@@ -201,7 +212,7 @@ export const useWorkouts = (
         "workoutID",
         workout,
         body,
-        setWorkoutLS,
+        putWorkoutIDB,
         setWorkouts,
         setErrorMessage
       );
@@ -221,9 +232,10 @@ export const useWorkouts = (
       userID,
       "workoutID",
       workout,
-      deleteWorkoutLS,
+      deleteWorkoutIDB,
       setWorkouts,
-      setErrorMessage
+      setErrorMessage,
+      setTrigger
     );
   };
   return {
@@ -240,12 +252,15 @@ export const useRoutines = (
   trigger: {},
   setErrorMessage: React.Dispatch<React.SetStateAction<string>>
 ) => {
-  const [routines, setRoutines] = useState(getRoutinesLS());
+  const [routines, setRoutines] = useState<RoutineData[]>([]);
+  useEffect(() => {
+    getRoutinesIDB(userID).then((routines) => setRoutines(routines));
+  }, [userID]);
   useEffect(() => {
     if (isUserLoggedIn(userID)) {
       GET(
         `${ORIGIN}/v1/users/${userID}/routines`,
-        setRoutinesLS,
+        setRoutinesIDB,
         setRoutines,
         setErrorMessage
       );
@@ -262,7 +277,7 @@ export const useRoutines = (
       body,
       routine,
       routines,
-      setRoutineLS,
+      setRoutineIDB,
       setRoutines,
       setErrorMessage
     );
@@ -277,7 +292,7 @@ export const useRoutines = (
       "routineID",
       routine,
       body,
-      setRoutineLS,
+      setRoutineIDB,
       setRoutines,
       setErrorMessage
     );
@@ -290,7 +305,7 @@ export const useRoutines = (
       userID,
       "routineID",
       routine,
-      deleteRoutineLS,
+      deleteRoutineIDB,
       setRoutines,
       setErrorMessage
     );

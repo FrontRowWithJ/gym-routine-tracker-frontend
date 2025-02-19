@@ -1,6 +1,5 @@
 import { GoogleButtonProps } from "./types";
 import {
-  FIVE_MINUTES,
   generateRandomString,
   GoogleAuthJWT,
   GymRoutineJWT,
@@ -10,6 +9,8 @@ import {
 import { useEffect, useRef } from "react";
 import { fetchWrapper } from "@/misc/fetchHandler";
 import { useErrorBanner } from "@/components/ErrorBanner";
+
+const FIVE_MINUTES = 300;
 
 export const GoogleButton = ({ setUserID }: GoogleButtonProps) => {
   const [ErrorBanner, setErrorMessage] = useErrorBanner();
