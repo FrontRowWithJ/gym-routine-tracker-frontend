@@ -3,7 +3,6 @@ import "./Routine.css";
 import { DottedPattern, Settings } from "@/resources/SVG";
 import { Button } from "@/components/Button";
 import { CreateOrEditRoutineDialog } from "@/components/CreateOrEditRoutineDialog";
-import { animateBackground } from "@/misc";
 
 export const Routine = (props: RoutineProps) => {
   const [openDialog, Dialog] = CreateOrEditRoutineDialog();
@@ -11,13 +10,7 @@ export const Routine = (props: RoutineProps) => {
 
   return (
     <>
-      <article
-        className="routine"
-        onClick={() => {
-          animateBackground();
-          props.setPage();
-        }}
-      >
+      <article className="routine" onClick={props.setPage}>
         <Button className="frosted-glass" onClick={openDialog}>
           <Settings />
         </Button>

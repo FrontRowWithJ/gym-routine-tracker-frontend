@@ -11,8 +11,7 @@ import { useErrorBanner } from "@/components/ErrorBanner";
 export const RoutinePage = ({
   page,
   userID,
-  setPage,
-  setPageName,
+  setPageAndPageName,
 }: RoutinePageProps) => {
   const [openDialog, Dialog] = CreateOrEditRoutineDialog();
   // used to force a render update after the number of routines change
@@ -36,8 +35,7 @@ export const RoutinePage = ({
                 routineData={routineData}
                 setPage={() => {
                   setRoutineID(routineData.routineID);
-                  setPage("Workout");
-                  setPageName(routineData.routineName);
+                  setPageAndPageName(routineData.routineName);
                 }}
                 PUT={putRoutine}
                 POST={postRoutine}
@@ -62,7 +60,7 @@ export const RoutinePage = ({
           </>
         ) : (
           routineID !== undefined && (
-            <WorkoutPage {...{ setPage, routineID, userID, setTrigger }} />
+            <WorkoutPage {...{ routineID, userID, setTrigger }} />
           )
         )}
       </article>

@@ -83,22 +83,6 @@ export const logout = () => {
   });
 };
 
-export const animateBackground = (
-  direction: "forwards" | "reverse" = "forwards"
-) => {
-  const controller = new AbortController();
-  const classNames = ["domain-expansion", `animate-${direction}`];
-  document.body.addEventListener(
-    "animationend",
-    () => {
-      document.body.classList.remove(...classNames);
-      controller.abort();
-    },
-    { signal: controller.signal }
-  );
-  document.body.classList.add(...classNames);
-};
-
 export const hashString = (value: string) => {
   return new jsSHA("SHA-256", "TEXT", {
     hmacKey: { value, format: "TEXT", encoding: "UTF8" },
