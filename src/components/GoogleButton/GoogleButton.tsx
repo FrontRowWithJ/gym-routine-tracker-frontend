@@ -32,7 +32,7 @@ export const GoogleButton = ({ setUserID }: GoogleButtonProps) => {
           ).toUTCString();
           const cookieAttributes = `Domain=${window.location.hostname}; Expires=${fiveMinutesUTCString}; Max-age=${FIVE_MINUTES}; Path=/v1/auth/google; secure; Samesite=strict; Secure`;
           document.cookie = `g_csrf_token=${g_csrf_token}; ${cookieAttributes}`;
-          fetchWrapper(`${ORIGIN}/v1/auth/google`, {
+          fetchWrapper<string>(`${ORIGIN}/v1/auth/google`, {
             method: "POST",
             cache: "default",
             credentials: "include",
@@ -42,13 +42,11 @@ export const GoogleButton = ({ setUserID }: GoogleButtonProps) => {
               "Content-Type": "application/json",
               Cookie: `g_csrf_token=${g_csrf_token}; ${cookieAttributes}`,
             },
-          }).then(({ data: token, error }) => {
+          }).then(({ response, error }) => {
             if (error === null) {
               try {
-                const payload = parseJWT<GymRoutineJWT>(
-                  token as string
-                ).payload;
-                localStorage.setItem("auth-token", token as string);
+                const payload = parseJWT<GymRoutineJWT>(response).payload;
+                localStorage.setItem("Authorization", response);
                 setUserID(+payload.sub);
               } catch (err) {
                 console.error(err);

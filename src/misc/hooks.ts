@@ -21,17 +21,23 @@ const GET = <T>(
   setState: (value: React.SetStateAction<T>) => void,
   setErrorMessage: React.Dispatch<React.SetStateAction<string>>
 ) => {
-  fetchWrapper<T>(URL, { method: "GET" }).then(({ data, error }) => {
-    if (error === null) {
-      setLS(data).then(() => setState(data));
-    } else {
-      console.error(error);
-      setErrorMessage(DEFAULT_ERROR_MESSAGE);
+  fetchWrapper<{ Authorization: string; data: T }>(URL, { method: "GET" }).then(
+    ({ response, error }) => {
+      if (error === null) {
+        const { Authorization, data } = response;
+        setLS(data).then(() => {
+          localStorage.setItem("Authorization", Authorization);
+          setState(data);
+        });
+      } else {
+        console.error(error);
+        setErrorMessage(DEFAULT_ERROR_MESSAGE);
+      }
     }
-  });
+  );
 };
 
-  const PUT = <T>(
+const PUT = <T>(
   URL: string,
   userID: number,
   cmp: (a: T, b: T) => boolean,
@@ -53,12 +59,13 @@ const GET = <T>(
   };
 
   if (isUserLoggedIn(userID)) {
-    fetchWrapper(URL, {
+    fetchWrapper<{ Authorization: string }>(URL, {
       method: "PUT",
       body: JSON.stringify(body),
-      headers: { Accept: "application/x-empty" },
-    }).then(({ error }) => {
+      headers: { Accept: "application/json" },
+    }).then(({ response, error }) => {
       if (error === null) {
+        localStorage.setItem("Authorization", response.Authorization);
         updateLocalAfterPut(data);
       } else {
         console.error(error);
@@ -82,23 +89,29 @@ const POST = <T extends { indexNumber: number }, S extends keyof T>(
   setErrorMessage: React.Dispatch<React.SetStateAction<string>>,
   setTrigger?: (obj: {}) => void
 ) => {
-  const updateLocalAfterPost = (data: T) => {
+  const updateLocalAfterPost = (response: {
+    Authorization?: string;
+    data: T;
+  }) => {
+    const { data, Authorization } = response;
     setStateLS(data).then(() => {
+      if (Authorization) localStorage.setItem("Authorization", Authorization);
       setState((stateList) => [...stateList, data]);
       setTrigger?.({});
     });
   };
   if (isUserLoggedIn(userID)) {
-    fetchWrapper<T>(URL, { method: "POST", body: JSON.stringify(body) }).then(
-      ({ data, error }) => {
-        if (error === null) {
-          updateLocalAfterPost(data);
-        } else {
-          console.error(error);
-          setErrorMessage(DEFAULT_ERROR_MESSAGE);
-        }
+    fetchWrapper<{ Authorization: string; data: T }>(URL, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }).then(({ response, error }) => {
+      if (error === null) {
+        updateLocalAfterPost(response);
+      } else {
+        console.error(error);
+        setErrorMessage(DEFAULT_ERROR_MESSAGE);
       }
-    );
+    });
   } else {
     const id =
       records.length === 0
@@ -110,7 +123,7 @@ const POST = <T extends { indexNumber: number }, S extends keyof T>(
         : Math.max(...records.map((d) => d.indexNumber));
     indexNumber = ((indexNumber / 1024) | 0) * 1024 + 1024;
     const newData = { ...data, indexNumber, [idKey]: id };
-    updateLocalAfterPost(newData);
+    updateLocalAfterPost({ data: newData });
   }
 };
 
@@ -133,7 +146,7 @@ const DELETE = <T>(
     });
   };
   if (isUserLoggedIn(userID)) {
-    fetchWrapper(URL, {
+    fetchWrapper<void>(URL, {
       method: "DELETE",
       headers: { Accept: "application/x-empty" },
     }).then(({ error }) => {
@@ -317,27 +330,21 @@ export const useRoutines = (
 };
 
 export const useUserState = () => {
-  const jwt = localStorage.getItem("auth-token");
-  let userID: number;
-  if (jwt === null) {
-    userID = OFFLINE_USER_ID;
-  } else {
-    try {
-      const payload = parseJWT<GymRoutineJWT>(jwt)["payload"];
-      const ID = +payload.sub;
-      const exp = +payload.exp;
-      const now = window.performance.now();
-      if (isNaN(ID) || isNaN(exp) || now >= exp) {
-        userID = OFFLINE_USER_ID;
-        localStorage.clear();
-      } else {
-        userID = ID;
-      }
-    } catch {
-      userID = OFFLINE_USER_ID;
+  const jwt = localStorage.getItem("Authorization");
+  let id = OFFLINE_USER_ID;
+  if (jwt !== null) {
+    const payload = parseJWT<GymRoutineJWT>(jwt)?.payload;
+    const ID = +payload?.sub;
+    const exp = +payload?.exp;
+    const now = window.performance.now();
+    if (!isNaN(ID) && !isNaN(exp) && now < exp) {
+      id = ID;
     }
   }
-  return useState(userID);
+  if (id === OFFLINE_USER_ID) {
+    localStorage.removeItem("Authorization");
+  }
+  return useState(id);
 };
 
 export const useToggle = <const A, const B>(initalValue: A, other: B) => {

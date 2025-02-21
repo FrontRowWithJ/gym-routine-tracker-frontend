@@ -3,10 +3,8 @@ import { OFFLINE_USER_ID } from "./constants";
 import { deleteRoutinesIDB } from "./storage";
 import jsSHA from "jssha";
 
-export const getYoutubeThumbnail = (youtubeID: string) => {
-  if (youtubeID === "") return "" as const;
-  return `https://i3.ytimg.com/vi/${youtubeID}/mqdefault.jpg` as const;
-};
+export const getYoutubeThumbnail = (youtubeID: string) =>
+  youtubeID && (`https://i3.ytimg.com/vi/${youtubeID}/mqdefault.jpg` as const);
 
 export const validateName = (value: string): string =>
   value.length > 0 ? "" : "Name can't be empty.";
@@ -25,8 +23,9 @@ export const generateRandomString = (numOfBytes: number) => {
     .replace(/=+$/, "");
 };
 
-// if the user is offline then the ID number should be -1
-export const isUserLoggedIn = (userID: number) => userID !== OFFLINE_USER_ID;
+// if the user is offline then userID === -1 and Auth item in localStorage is null
+export const isUserLoggedIn = (userID: number) =>
+  userID !== OFFLINE_USER_ID && localStorage.getItem("Authorization") !== null;
 
 export const parseJWT = <
   const JWT extends {
@@ -54,7 +53,7 @@ export const parseJWT = <
 export const applyDefaultRequestInitParams = (
   requestInit: RemoveOptional<RequestInit, "method">
 ): RequestInit => {
-  const token = localStorage.getItem("auth-token");
+  const token = localStorage.getItem("Authorization");
   const { headers, ...rest } = requestInit;
   return {
     credentials: "include",
@@ -78,7 +77,7 @@ export const applyDefaultRequestInitParams = (
 
 export const logout = () => {
   deleteRoutinesIDB().then(() => {
-    localStorage.removeItem("auth-token");
+    localStorage.removeItem("Authorization");
     localStorage.removeItem("cache");
     window.location.href = window.location.origin;
   });

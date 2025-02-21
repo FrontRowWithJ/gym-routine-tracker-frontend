@@ -28,21 +28,21 @@ const getLoggedInData = (
       <img
         alt="icon"
         src={
-          parseJWT<GymRoutineJWT>(localStorage.getItem("auth-token")!).payload
-            .picture
+          parseJWT<GymRoutineJWT>(localStorage.getItem("Authorization")!)
+            .payload.picture
         }
       />
     ),
     loginLogoutText: "Delete Account",
     loginLogoutButton: (
-      <Button onClick={logout}>
+      <Button onClick={logout} className="static-noise">
         <span>Logout</span>
         <Logout />
       </Button>
     ),
     deleteAction: (event: React.MouseEvent<HTMLElement, MouseEvent>) => {
-      const token = localStorage.getItem("auth-token");
-      fetchWrapper(`${ORIGIN}/v1/users/${userID}`, {
+      const token = localStorage.getItem("Authorization");
+      fetchWrapper<void>(`${ORIGIN}/v1/users/${userID}`, {
         method: "DELETE",
         headers: {
           Accept: "application/x-empty",
@@ -102,7 +102,7 @@ export const LoginMenu = (props: LoginMenuProps) => {
       <ErrorBanner />
       <ButtonMenu {...{ buttonIcon, isLoggedIn }}>
         {loginLogoutButton}
-        <Button onClick={openDialog}>
+        <Button onClick={openDialog} className="static-noise">
           <span>{loginLogoutText}</span>
           <PermanentBin />
         </Button>

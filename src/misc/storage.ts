@@ -128,22 +128,19 @@ const getRoutineIDB = async (routineID: number) => {
 
 const getRecordIDB = async <T extends { indexNumber: number }>(
   id: number,
-  objectStoreName: string,
+  storeName: string,
   indexName: string
 ) => {
   const db = await openDB();
   return new Promise<T[]>((resolve, reject) => {
-    const tx = db.transaction(objectStoreName, "readonly");
+    const tx = db.transaction(storeName, "readonly");
     tx.oncomplete = () => {
       const records: T[] = getAllRequest.result;
       records.sort((a, b) => a.indexNumber - b.indexNumber);
       resolve(records);
     };
     tx.onerror = () => reject(tx.error);
-    const getAllRequest = tx
-      .objectStore(objectStoreName)
-      .index(indexName)
-      .getAll(id);
+    const getAllRequest = tx.objectStore(storeName).index(indexName).getAll(id);
   }).finally(() => db.close());
 };
 
@@ -162,7 +159,9 @@ export const setRoutinesIDB = async (routines: RoutineData[]) => {
     tx.objectStore("routines").clear().onsuccess = () => {
       const clearWorkoutsRequest = tx.objectStore("workouts").clear();
       clearWorkoutsRequest.onsuccess = () => {
-        for (const routine of routines) tx.objectStore("routines").put(routine);
+        for (const routine of routines) {
+          tx.objectStore("routines").put(routine);
+        }
         tx.commit();
       };
     };
@@ -186,13 +185,13 @@ export const setWorkoutsIDB = async (workouts: WorkoutData[]) => {
   }).finally(() => db.close());
 };
 
-const putRecordIDB = async <T>(record: T, objectStoreName: string) => {
+const putRecordIDB = async <T>(record: T, storeName: string) => {
   const db = await openDB();
   return new Promise<void>((resolve, reject) => {
-    const tx = db.transaction(objectStoreName, "readwrite");
+    const tx = db.transaction(storeName, "readwrite");
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
-    tx.objectStore(objectStoreName).put(record);
+    tx.objectStore(storeName).put(record);
   });
 };
 
@@ -234,10 +233,7 @@ const deleteWorkoutsIDB = async (routineID: number) => {
   const db = await openDB();
   return new Promise<void>((resolve, reject) => {
     const tx = db.transaction("workouts", "readwrite");
-    tx.oncomplete = () => {
-      resolve();
-      console.log("foo");
-    };
+    tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
     const deleteCursor = tx
       .objectStore("workouts")

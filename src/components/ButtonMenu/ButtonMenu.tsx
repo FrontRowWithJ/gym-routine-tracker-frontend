@@ -1,14 +1,7 @@
 import { ButtonMenuProps } from "./types";
 import "./ButtonMenu.css";
 import { Button } from "@/components/Button";
-import {
-  useEffect,
-  useRef,
-  useState,
-  Children,
-  cloneElement,
-  useMemo,
-} from "react";
+import { useEffect, useRef, useState } from "react";
 import { Close } from "@/resources/SVG";
 import { CLOSE } from "@/misc";
 import { Divider } from "@/components/Divider";
@@ -37,16 +30,6 @@ export const ButtonMenu = ({
     );
     return () => controller.abort();
   }, [buttonMenuRef]);
-  const memoisedChildren = useMemo(
-    () =>
-      Children.map(children, (child) => {
-        const className = (child as any)?.props?.className ?? "";
-        return cloneElement(child as React.ReactElement<HTMLButtonElement>, {
-          className: `${className} static-noise`,
-        });
-      }),
-    [children]
-  );
   return (
     <div className="button-menu-container">
       <Button
@@ -67,7 +50,7 @@ export const ButtonMenu = ({
           </Button>
         </header>
         <Divider margin="0.5rem" width="calc(100% - 1rem)" />
-        <article>{memoisedChildren}</article>
+        <article>{children}</article>
       </menu>
       {isMenuOpen && <div className="backdrop"></div>}
     </div>
