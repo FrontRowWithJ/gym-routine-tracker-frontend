@@ -17,8 +17,7 @@
     color: var(--text-color);
     background-color: var(--navbar-background);
     span {
-      flex-grow: 1;
-      flex-basis: 0;
+      flex: 1 1 0;
       display: inline-block;
       text-align: center;
       line-height: 3rem;
