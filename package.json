@@ -6,7 +6,8 @@
     "js-video-url-parser": "^0.5.1",
     "jssha": "^3.3.1",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "@craco/craco": "^5.9.0"
   },
   "scripts": {
     "start": "craco start",
@@ -35,7 +36,6 @@
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.26.8",
-    "@craco/craco": "^5.9.0",
     "@eslint/js": "^9.20.0",
     "@types/node": "^16.18.113",
     "@types/react": "^19.0.6",
