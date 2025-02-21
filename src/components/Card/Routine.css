@@ -40,7 +40,13 @@
     padding: 0.5rem 0 0 0.5rem;
     border: none; /* overriding .frosted-glass:border*/
     backdrop-filter: blur(7px);
-    
+
+    header {
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
     > h5 {
       letter-spacing: normal;
       font-weight: normal;

@@ -8,7 +8,11 @@ import { useState } from "react";
 import { useRoutines } from "@/misc/hooks";
 import { useErrorBanner } from "@/components/ErrorBanner";
 
-export const RoutinePage = ({ page, userID, setPage }: RoutinePageProps) => {
+export const RoutinePage = ({
+  page,
+  userID,
+  setPageAndPageName,
+}: RoutinePageProps) => {
   const [openDialog, Dialog] = CreateOrEditRoutineDialog();
   // used to force a render update after the number of routines change
   const [trigger, setTrigger] = useState<{}>({});
@@ -31,7 +35,7 @@ export const RoutinePage = ({ page, userID, setPage }: RoutinePageProps) => {
                 routineData={routineData}
                 setPage={() => {
                   setRoutineID(routineData.routineID);
-                  setPage("Workout");
+                  setPageAndPageName(routineData.routineName);
                 }}
                 PUT={putRoutine}
                 POST={postRoutine}
@@ -56,7 +60,7 @@ export const RoutinePage = ({ page, userID, setPage }: RoutinePageProps) => {
           </>
         ) : (
           routineID !== undefined && (
-            <WorkoutPage {...{ setPage, routineID, userID, setTrigger }} />
+            <WorkoutPage {...{ routineID, userID, setTrigger }} />
           )
         )}
       </article>

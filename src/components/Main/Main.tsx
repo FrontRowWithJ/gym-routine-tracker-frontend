@@ -1,11 +1,12 @@
 import "./Main.css";
 import { RoutinePage } from "@/components/RoutinePage";
-import { animateBackground, isUserLoggedIn } from "@/misc";
+import { isUserLoggedIn, Page } from "@/misc";
 import { LoginMenu } from "@/components/LoginMenu";
 import { useToggle, useUserState } from "@/misc/hooks";
 import { useTheme } from "@/components/ThemeContextProvider";
 import { Button } from "@/components/Button";
 import { Chart, Home, Workout, Dark, Light } from "@/resources/SVG";
+import { useState } from "react";
 
 const ThemeButton = () => {
   const [theme, setTheme] = useTheme();
@@ -26,35 +27,60 @@ const ModeButton = () => {
   );
 };
 
+const animateBackground = (direction: "forwards" | "reverse") => {
+  const controller = new AbortController();
+  const classNames = ["domain-expansion", `animate-${direction}`];
+  document.body.addEventListener(
+    "animationend",
+    () => {
+      document.body.classList.remove(...classNames);
+      controller.abort();
+    },
+    { signal: controller.signal }
+  );
+  document.body.classList.add(...classNames);
+};
+
 const useHomeButton = () => {
-  const [page, setPage] = useToggle("Routine", "Workout");
+  const [{ page, pageName }, setState] = useState<{
+    page: Page;
+    pageName: string;
+  }>({
+    page: "Routine",
+    pageName: "Trackout",
+  });
+  const setPageAndPageName = (pageName: string) => {
+    setState((currState) => {
+      if (currState.pageName === pageName) return currState;
+      animateBackground(page === "Routine" ? "forwards" : "reverse");
+      return {
+        page: pageName === "Trackout" ? "Routine" : "Workout",
+        pageName,
+      };
+    });
+  };
   const HomeButton = () => (
-    <Button
-      onClick={() => {
-        setPage("Routine");
-        if (page === "Workout") animateBackground("reverse");
-      }}
-    >
+    <Button onClick={() => setPageAndPageName("Trackout")}>
       <Home />
     </Button>
   );
-  return [page, setPage, HomeButton] as const;
+  return [{ page, pageName, setPageAndPageName }, HomeButton] as const;
 };
 
 export const Main = () => {
   const [userID, setUserID] = useUserState();
   const isLoggedIn = isUserLoggedIn(userID);
-  const [page, setPage, HomeButton] = useHomeButton();
+  const [{ page, pageName, setPageAndPageName }, HomeButton] = useHomeButton();
   return (
     <main className="main-page">
       <nav>
         <HomeButton />
         <ModeButton />
-        <span>Trackout</span>
+        <span>{pageName}</span>
         <ThemeButton />
         <LoginMenu {...{ isLoggedIn, setUserID, userID }} />
       </nav>
-      {<RoutinePage {...{ page, setPage, userID }} />}
+      {<RoutinePage {...{ page, userID, setPageAndPageName }} />}
     </main>
   );
 };
