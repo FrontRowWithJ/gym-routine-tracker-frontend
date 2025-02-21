@@ -7,7 +7,11 @@
     "jssha": "^3.3.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "@craco/craco": "^5.9.0"
+    "@craco/craco": "^5.9.0",
+    "typescript": "^5.7.3",
+    "@babel/eslint-parser": "^7.26.8",
+    "eslint": "^9.20.1",
+    "typescript-eslint": "^8.24.0"
   },
   "scripts": {
     "start": "craco start",
@@ -35,14 +39,10 @@
     ]
   },
   "devDependencies": {
-    "@babel/eslint-parser": "^7.26.8",
     "@eslint/js": "^9.20.0",
     "@types/node": "^16.18.113",
     "@types/react": "^19.0.6",
     "@types/react-dom": "19.0.2",
-    "eslint": "^9.20.1",
-    "eslint-config-react-app": "^7.0.1",
-    "typescript": "^5.7.3",
-    "typescript-eslint": "^8.24.0"
+    "eslint-config-react-app": "^7.0.1"    
   }
 }
