@@ -31,10 +31,14 @@ export const fetchWrapper = <T>(
       method: "DELETE" | "POST" | "PUT" | "GET" | "OPTIONS";
     }
   >
-): Promise<{ data: T; error: null } | { data: null; error: FetchError }> => {
+): Promise<
+  { response: T; error: null } | { response: null; error: FetchError }
+> => {
   const execute = async (
     attempt: number
-  ): Promise<{ data: T; error: null } | { data: null; error: FetchError }> => {
+  ): Promise<
+    { response: T; error: null } | { response: null; error: FetchError }
+  > => {
     init = applyDefaultRequestInitParams(init) as typeof init;
     try {
       const controller = new AbortController();
@@ -50,32 +54,32 @@ export const fetchWrapper = <T>(
       }
       try {
         if (acceptType === "application/json") {
-          return { data: await response.json(), error: null };
+          return { response: await response.json(), error: null };
         } else if (acceptType === "text/plain") {
-          return { data: (await response.text()) as T, error: null };
+          return { response: (await response.text()) as T, error: null };
         }
-        return { data: "" as T, error: null };
+        return { response: "" as T, error: null };
       } catch (dataError) {
         if (attempt < retries) {
           throw dataError;
         } // jump to retry
         if (acceptType === "application/json") {
-          return { data: null, error: "InvalidJSON" };
+          return { response: null, error: "InvalidJSON" };
         }
-        return { data: null, error: "InvalidText" };
+        return { response: null, error: "InvalidText" };
       }
     } catch (error) {
       if ((error as Error).name === "AbortError") {
-        return { data: null, error: "Timeout" };
+        return { response: null, error: "Timeout" };
       } else if ((error as Error).message === "MissingAcceptType") {
-        return { data: null, error: "MissingAcceptType" };
+        return { response: null, error: "MissingAcceptType" };
       } else if (attempt < retries) {
         const delayMs = retryBaseDelay * 2 ** attempt;
         return new Promise((resolve) =>
           setTimeout(() => resolve(execute(attempt + 1)), delayMs)
         );
       }
-      return { data: null, error: "RequestFailed" };
+      return { response: null, error: "RequestFailed" };
     }
   };
   return execute(0);

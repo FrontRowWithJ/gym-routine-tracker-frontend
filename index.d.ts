@@ -1,4 +1,4 @@
-type localStorageAllowedKeys = "cache" | "theme" | "auth-token";
+type localStorageAllowedKeys = "cache" | "theme" | "Authorization";
 
 interface Storage {
   getItem(key: "theme"): "dark" | "light" | null;

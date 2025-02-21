@@ -10,7 +10,7 @@ export const MenuIcon = ({ isLoggedIn }: MenuIconProps) => {
     <img
       className="menu-icon"
       src={
-        parseJWT<GymRoutineJWT>(localStorage.getItem("auth-token")!).payload
+        parseJWT<GymRoutineJWT>(localStorage.getItem("Authorization")!).payload
           .picture
       }
       alt="icon"
