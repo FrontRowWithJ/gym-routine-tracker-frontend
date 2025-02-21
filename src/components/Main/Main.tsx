@@ -6,6 +6,7 @@ import { useToggle, useUserState } from "@/misc/hooks";
 import { useTheme } from "@/components/ThemeContextProvider";
 import { Button } from "@/components/Button";
 import { Chart, Home, Workout, Dark, Light } from "@/resources/SVG";
+import { useState } from "react";
 
 const ThemeButton = () => {
   const [theme, setTheme] = useTheme();
@@ -28,33 +29,36 @@ const ModeButton = () => {
 
 const useHomeButton = () => {
   const [page, setPage] = useToggle("Routine", "Workout");
+  const [pageName, setPageName] = useState("Trackout");
   const HomeButton = () => (
     <Button
       onClick={() => {
         setPage("Routine");
+        setPageName("Trackout");
         if (page === "Workout") animateBackground("reverse");
       }}
     >
       <Home />
     </Button>
   );
-  return [page, setPage, HomeButton] as const;
+  return [{ page, pageName, setPage, setPageName }, HomeButton] as const;
 };
 
 export const Main = () => {
   const [userID, setUserID] = useUserState();
   const isLoggedIn = isUserLoggedIn(userID);
-  const [page, setPage, HomeButton] = useHomeButton();
+  const [{ page, setPage, pageName, setPageName }, HomeButton] =
+    useHomeButton();
   return (
     <main className="main-page">
       <nav>
         <HomeButton />
         <ModeButton />
-        <span>Trackout</span>
+        <span>{pageName}</span>
         <ThemeButton />
         <LoginMenu {...{ isLoggedIn, setUserID, userID }} />
       </nav>
-      {<RoutinePage {...{ page, setPage, userID }} />}
+      {<RoutinePage {...{ page, setPage, userID, setPageName }} />}
     </main>
   );
 };

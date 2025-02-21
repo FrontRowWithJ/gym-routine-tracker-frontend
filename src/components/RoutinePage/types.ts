@@ -4,4 +4,5 @@ export type RoutinePageProps = {
   page: Page;
   userID: number;
   setPage: (newState?: "Workout" | "Routine") => void;
+  setPageName: React.Dispatch<React.SetStateAction<string>>;
 };
