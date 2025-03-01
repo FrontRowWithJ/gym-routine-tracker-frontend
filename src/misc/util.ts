@@ -1,5 +1,4 @@
 import { RemoveOptional } from "./types";
-import { OFFLINE_USER_ID } from "./constants";
 import { deleteRoutinesIDB } from "./storage";
 import jsSHA from "jssha";
 
@@ -22,10 +21,6 @@ export const generateRandomString = (numOfBytes: number) => {
     .replace(/\//g, "_")
     .replace(/=+$/, "");
 };
-
-// if the user is offline then userID === -1 and Auth item in localStorage is null
-export const isUserLoggedIn = (userID: number) =>
-  userID !== OFFLINE_USER_ID && localStorage.getItem("Authorization") !== null;
 
 export const parseJWT = <
   const JWT extends {

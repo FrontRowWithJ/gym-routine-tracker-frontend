@@ -1,8 +1,8 @@
 import "./Main.css";
 import { RoutinePage } from "@/components/RoutinePage";
-import { isUserLoggedIn, Page } from "@/misc";
+import { Page } from "@/misc";
 import { LoginMenu } from "@/components/LoginMenu";
-import { useToggle, useUserState } from "@/misc/hooks";
+import { useToggle, useUserState, isUserLoggedIn } from "@/misc/hooks";
 import { useTheme } from "@/components/ThemeContextProvider";
 import { Button } from "@/components/Button";
 import { Chart, Home, Workout, Dark, Light } from "@/resources/SVG";

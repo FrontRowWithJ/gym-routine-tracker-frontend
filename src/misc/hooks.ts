@@ -10,10 +10,34 @@ import {
   deleteRoutineIDB,
   setRoutinesIDB,
 } from "./storage";
-import { isUserLoggedIn, parseJWT } from "./util";
+import { parseJWT } from "./util";
 import { GymRoutineJWT, RoutineData, WorkoutData } from "./types";
-import { DEFAULT_ERROR_MESSAGE, OFFLINE_USER_ID, ORIGIN } from "./constants";
+import { DEFAULT_ERROR_MESSAGE, ORIGIN } from "./constants";
 import { debounce, fetchWrapper } from "./fetchHandler";
+
+export const OFFLINE_USER_ID = -1;
+
+const isValidJWT = (jwt: string) => {
+  const { sub, exp } = parseJWT<GymRoutineJWT>(jwt).payload;
+  const now = Math.floor(Date.now() / 1000);
+  return !isNaN(+sub) && !isNaN(+exp) && now < +exp ? +sub : OFFLINE_USER_ID;
+};
+
+export const isUserLoggedIn = (userID: number) => {
+  const jwt = localStorage.getItem("Authorization");
+  return (
+    userID !== OFFLINE_USER_ID &&
+    jwt !== null &&
+    isValidJWT(jwt) !== OFFLINE_USER_ID
+  );
+};
+
+export const useUserState = () => {
+  const jwt = localStorage.getItem("Authorization");
+  const id = jwt === null ? OFFLINE_USER_ID : isValidJWT(jwt);
+  if (id === OFFLINE_USER_ID) localStorage.removeItem("Authorization");
+  return useState(id);
+};
 
 const GET = <T>(
   URL: string,
@@ -327,24 +351,6 @@ export const useRoutines = (
     postRoutine,
     deleteRoutine,
   };
-};
-
-export const useUserState = () => {
-  const jwt = localStorage.getItem("Authorization");
-  let id = OFFLINE_USER_ID;
-  if (jwt !== null) {
-    const payload = parseJWT<GymRoutineJWT>(jwt)?.payload;
-    const ID = +payload?.sub;
-    const exp = +payload?.exp;
-    const now = Math.floor(Date.now() / 1000);
-    if (!isNaN(ID) && !isNaN(exp) && now < exp) {
-      id = ID;
-    }
-  }
-  if (id === OFFLINE_USER_ID) {
-    localStorage.removeItem("Authorization");
-  }
-  return useState(id);
 };
 
 export const useToggle = <const A, const B>(initalValue: A, other: B) => {
