@@ -336,7 +336,7 @@ export const useUserState = () => {
     const payload = parseJWT<GymRoutineJWT>(jwt)?.payload;
     const ID = +payload?.sub;
     const exp = +payload?.exp;
-    const now = window.performance.now();
+    const now = Math.floor(Date.now() / 1000);
     if (!isNaN(ID) && !isNaN(exp) && now < exp) {
       id = ID;
     }
