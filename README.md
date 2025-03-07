@@ -1,6 +1,6 @@
 <div align="center">
   <a href="https://machrino.me">
-    <img alt="trackout-logo" src="./public/logo192.png" width="120" height="120"></img>
+    <img alt="trackout-logo" src="./public/logo-light192.png" width="120" height="120"></img>
   </a>
   <h3 align="center">Trackout</h3>
   <p align="center">
@@ -51,37 +51,62 @@ The backend was built with:\
 
 ## Guide
 
-<div style="display: flex; align-items: center">
-  <img align="left" src="./login-screen.png" width="125" height="290" alt="Login Screen"/>
-  <h3 align="left">You can start by signing in with Google but you can use the app without creating an account.</h3>
-</div>
-</br>
-<div style="display: flex; align-items: center">
-  <img align="left" src="./create-routine.png" width="125" height="290" alt="Create Routine Screen"/>
-  <h3 align="left">Next, create a routine. You can name it whatever</h3>
-</div>
-</br>
-<div style="display: flex; align-items: center">
-  <img align="left" src="./create-workout.png" width="125" height="290" alt="Create Workout Screen"/>
-  <h3 align="left">Next, create a workout. You can name it whatever</h3>
-</div>
-</br>
-<div style="display: flex; align-items: center;">
-  <img align="left" src="./edit-routine.png" width="125" height="290" alt="Edit Workout Screen"/>
-  <img align="left" src="./edit-workout.png" width="125" height="290" alt="Edit Workout Screen"/>
-  <h3 align="left">You can edit your routines and workouts.</h3>
-</div>
-</br>
-<div style="display: flex; align-items: center">
-  <img align="left" src="./use-workout.png" width="125" height="290" alt="Edit Workout Screen"/>
-  <h3 align="left">Increment/Decrement the weight amount or play the workout video.</h3>
-</div>
-</br>
-<div style="display: flex; align-items: center;">
-  <img align="left" src="./light-mode.png" width="125" height="290" alt="Edit Workout Screen"/>
-  <img align="left" src="./dark-mode.png" width="125" height="290" alt="Edit Workout Screen"/>
-  <h3 align="left">You can also toggle between light and dark mode!</h3>
-</div>
+<table style="width: 100%; border: none;" cellspacing="0" cellpadding="0" border="0">
+  <tr>
+    <td>
+      <img align="left" src="./login-screen.png" width="125" height="290" alt="Login Screen"/>
+    </td>
+    <td colspan="2">
+      <h3 align="left">You can start by signing in with Google but you can use the app without creating an account.</h3>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img  align="left" src="./create-routine.png" width="125" height="290" alt="Create Routine Screen"/>
+    </td>
+    <td colspan="2">
+      <h3 align="left">Next, create a routine. You can name it whatever</h3>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img align="left" src="./create-workout.png" width="125" height="290" alt="Create Workout Screen"/>
+    </td>
+    <td colspan="2">
+      <h3 align="left">Next, create a workout. You can name it whatever</h3>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img align="left" src="./edit-routine.png" width="125" height="290" alt="Edit Workout Screen"/>
+    </td>
+    <td>
+      <img align="left" src="./edit-workout.png" width="125" height="290" alt="Edit Workout Screen"/>
+    </td>
+    <td>
+      <h3 align="left">You can edit your routines and workouts.</h3>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img align="left" src="./use-workout.png" width="125" height="290" alt="Edit Workout Screen"/>
+    </td>
+    <td colspan="2">
+      <h3 align="left">Increment/Decrement the weight amount or play the workout video.</h3>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img align="left" src="./light-mode.png" width="125" height="290" alt="Edit Workout Screen"/>
+    </td>
+    <td>
+      <img align="left" src="./dark-mode.png" width="125" height="290" alt="Edit Workout Screen"/>
+    </td>
+    <td>
+      <h3 align="left">You can also toggle between light and dark mode!</h3>
+    </td>
+  </tr>
+</table>
 
 [react-badge]: https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB
 [react-url]: https://reactjs.org/
