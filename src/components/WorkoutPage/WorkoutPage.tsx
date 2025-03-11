@@ -37,6 +37,7 @@ export const WorkoutPage = ({
           <Divider width="90%" margin="0.5rem" />
         </Fragment>
       ))}
+      <Divider backgroundColor="transparent" margin="2.5rem"/>
       <CreateButton onClick={openDialog} label="Create Workout" />
       <Dialog
         label="Create"
