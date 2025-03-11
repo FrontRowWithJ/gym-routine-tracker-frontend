@@ -7,6 +7,7 @@ import { WorkoutPage } from "@/components/WorkoutPage";
 import { useState } from "react";
 import { useRoutines } from "@/misc/hooks";
 import { useErrorBanner } from "@/components/ErrorBanner";
+import { Divider } from "../Divider";
 
 export const RoutinePage = ({
   page,
@@ -43,6 +44,7 @@ export const RoutinePage = ({
               />
             ))}
             <CreateButton onClick={openDialog} label="Create Routine" />
+            <Divider backgroundColor="transparent" margin="2.5rem" />
             <Dialog
               className="create-routine-dialog"
               label="Create"
