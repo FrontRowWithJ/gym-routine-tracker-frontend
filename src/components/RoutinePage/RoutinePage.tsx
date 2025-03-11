@@ -43,8 +43,8 @@ export const RoutinePage = ({
                 DELETE={deleteRoutine}
               />
             ))}
-            <CreateButton onClick={openDialog} label="Create Routine" />
             <Divider backgroundColor="transparent" margin="2.5rem" />
+            <CreateButton onClick={openDialog} label="Create Routine" />
             <Dialog
               className="create-routine-dialog"
               label="Create"
