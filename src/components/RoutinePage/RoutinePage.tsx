@@ -7,7 +7,7 @@ import { WorkoutPage } from "@/components/WorkoutPage";
 import { useState } from "react";
 import { useRoutines } from "@/misc/hooks";
 import { useErrorBanner } from "@/components/ErrorBanner";
-import { Divider } from "../Divider";
+import { Divider } from "@/components/Divider";
 
 export const RoutinePage = ({
   page,
