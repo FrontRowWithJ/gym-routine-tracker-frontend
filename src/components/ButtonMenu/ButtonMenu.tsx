@@ -1,11 +1,11 @@
 import { ButtonMenuProps } from "./types";
 import "./ButtonMenu.css";
 import { Button } from "@/components/Button";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Close } from "@/resources/SVG";
-import { CLOSE } from "@/misc";
 import { Divider } from "@/components/Divider";
 import { MenuIcon } from "@/components/MenuIcon";
+import { useWindowEvent } from "@/misc/hooks";
 
 export const ButtonMenu = ({
   children,
@@ -14,22 +14,19 @@ export const ButtonMenu = ({
 }: ButtonMenuProps) => {
   const toggleMenuRef = useRef<HTMLButtonElement>(null);
   const buttonMenuRef = useRef<HTMLMenuElement>(null);
-  const [isMenuOpen, setIsMenuOpen] = useState(CLOSE);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    window.addEventListener(
-      "click",
-      (event) => {
-        if (!buttonMenuRef.current || !toggleMenuRef.current) return;
-        const isMenuItem = buttonMenuRef.current.contains(event.target as any);
-        const isMenuButton = toggleMenuRef.current === event.target;
-        if (!isMenuButton && !isMenuItem) setIsMenuOpen(CLOSE);
-      },
-      { signal: controller.signal }
-    );
-    return () => controller.abort();
-  }, [buttonMenuRef]);
+  useWindowEvent(
+    false,
+    "click",
+    (event) => {
+      if (!buttonMenuRef.current || !toggleMenuRef.current) return;
+      const isMenuItem = buttonMenuRef.current.contains(event.target as any);
+      const isMenuButton = toggleMenuRef.current === event.target;
+      if (!isMenuButton && !isMenuItem) setIsMenuOpen(false);
+    },
+    [buttonMenuRef]
+  );
   return (
     <div className="button-menu-container">
       <Button
@@ -45,7 +42,7 @@ export const ButtonMenu = ({
       >
         <header>
           <MenuIcon isLoggedIn={isLoggedIn} />
-          <Button onClick={() => setIsMenuOpen(CLOSE)} className="static-noise">
+          <Button onClick={() => setIsMenuOpen(false)} className="static-noise">
             <Close />
           </Button>
         </header>

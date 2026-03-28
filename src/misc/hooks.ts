@@ -359,3 +359,17 @@ export const useToggle = <const A, const B>(initalValue: A, other: B) => {
     setState(newState ?? (state === initalValue ? other : initalValue));
   return [state, toggle] as const;
 };
+
+export const useWindowEvent = <K extends keyof WindowEventMap>(
+  shouldReturnEarly: boolean,
+  type: K,
+  listener: (this: Window, ev: WindowEventMap[K]) => any,
+  deps?: React.DependencyList
+) => {
+  useEffect(() => {
+    if (shouldReturnEarly) return;
+    const controller = new AbortController();
+    window.addEventListener(type, listener, { signal: controller.signal });
+    return () => controller.abort();
+  }, deps ?? []);
+};

@@ -1,0 +1,14 @@
+.saved-timestamps {
+  overflow-y: scroll;
+  white-space: nowrap;
+  width: 100%;
+  > div {
+    width: fit-content;
+    margin: 0 auto;
+    button {
+      display: inline-block;
+      width: 8rem;
+      margin: 0 0.5rem;
+    }
+  }
+}

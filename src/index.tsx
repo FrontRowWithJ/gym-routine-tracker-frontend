@@ -7,6 +7,7 @@ import {
   useTheme,
 } from "@/components/ThemeContextProvider";
 import { initDB } from "./misc";
+import { Timer } from "@/components/Timer";
 
 initDB();
 const root = ReactDOM.createRoot(document.body);
@@ -24,7 +25,8 @@ root.render(
   <React.StrictMode>
     <ThemeContextProvider>
       <Favicon />
-      <Main />
+      {/* <Main /> */}
+      <Timer />
     </ThemeContextProvider>
   </React.StrictMode>
 );
