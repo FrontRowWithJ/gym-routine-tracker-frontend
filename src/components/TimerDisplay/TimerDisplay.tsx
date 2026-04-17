@@ -212,17 +212,36 @@ export const TimerDisplay = ({
 
   useEffect(() => {
     const handler = (event: MessageEvent) => {
-      if (event.data?.type === "TIMER_FINISHED") {
-        startVibration();
-        playSound();
-        setCountdownState("finished");
-        notificationIDRef.current = null;
+      switch (event.data?.type) {
+        case "TIMER_FINISHED":
+          startVibration();
+          playSound();
+          setCountdownState("finished");
+          notificationIDRef.current = null;
+          break;
+        case "TIMER_NOTIFICATION_CLOSED":
+          stopSound();
+          stopVibration();
+          closeNotification();
+          notificationIDRef.current = null;
+          break;
       }
     };
     navigator.serviceWorker.addEventListener("message", handler);
     return () =>
       navigator.serviceWorker.removeEventListener("message", handler);
-  }, [startVibration]);
+  }, [startVibration, stopVibration, closeNotification]);
+
+  useEffect(() => {
+    const handler = (event: MessageEvent) => {
+      if (event.data?.type === "TIMER_NOTIFICATION_CLOSED") {
+        // handle dismissal
+      }
+    };
+    navigator.serviceWorker.addEventListener("message", handler);
+    return () =>
+      navigator.serviceWorker.removeEventListener("message", handler);
+  }, []);
 
   useEffect(() => {
     requestRef.current = requestAnimationFrame(animateLabel);

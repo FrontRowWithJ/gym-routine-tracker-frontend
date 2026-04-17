@@ -78,3 +78,12 @@ self.addEventListener("push", (event) => {
   };
   self.registration.showNotification("00:00 ⌛ Time's up!", options);
 });
+
+self.addEventListener("notificationclose", () => {
+  // notification was dismissed by the user
+  self.clients.matchAll().then((clients) => {
+    clients.forEach((client) =>
+      client.postMessage({ type: "TIMER_NOTIFICATION_CLOSED" }),
+    );
+  });
+});
