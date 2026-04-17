@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   getWorkoutsIDB,
   addWorkoutIDB,
@@ -43,22 +43,23 @@ const GET = <T>(
   URL: string,
   setLS: (data: T) => Promise<void>,
   setState: (value: React.SetStateAction<T>) => void,
-  setErrorMessage: React.Dispatch<React.SetStateAction<string>>
+  setErrorMessage: React.Dispatch<React.SetStateAction<string>>,
 ) => {
-  fetchWrapper<{ Authorization: string; data: T }>(URL, { method: "GET" }).then(
-    ({ response, error }) => {
-      if (error === null) {
-        const { Authorization, data } = response;
-        setLS(data).then(() => {
-          localStorage.setItem("Authorization", Authorization);
-          setState(data);
-        });
-      } else {
-        console.error(error);
-        setErrorMessage(DEFAULT_ERROR_MESSAGE);
-      }
+  fetchWrapper<"application/json", { Authorization: string; data: T }>(URL, {
+    method: "GET",
+    headers: { Accept: "application/json" },
+  }).then(({ response, error }) => {
+    if (error === null) {
+      const { Authorization, data } = response;
+      setLS(data).then(() => {
+        localStorage.setItem("Authorization", Authorization);
+        setState(data);
+      });
+    } else {
+      console.error(error);
+      setErrorMessage(DEFAULT_ERROR_MESSAGE);
     }
-  );
+  });
 };
 
 const PUT = <T>(
@@ -69,21 +70,20 @@ const PUT = <T>(
   body: { [K in keyof T]?: T[K] },
   setStateLS: (data: T) => Promise<void>,
   setState: (value: React.SetStateAction<T[]>) => void,
-  setErrorMessage: React.Dispatch<React.SetStateAction<string>>
+  setErrorMessage: React.Dispatch<React.SetStateAction<string>>,
 ) => {
   const updateLocalAfterPut = (data: T) => {
-    setStateLS(data).then(() => {
-      setState((stateList) => {
-        const index = stateList.findIndex((item) => cmp(item, data));
-        const start = stateList.slice(0, index);
-        const end = stateList.slice(index + 1);
-        return [...start, data, ...end];
-      });
+    setState((stateList) => {
+      const index = stateList.findIndex((item) => cmp(item, data));
+      const start = stateList.slice(0, index);
+      const end = stateList.slice(index + 1);
+      return [...start, data, ...end];
     });
+    setStateLS(data);
   };
 
   if (isUserLoggedIn(userID)) {
-    fetchWrapper<{ Authorization: string }>(URL, {
+    fetchWrapper<"application/json", { Authorization: string }>(URL, {
       method: "PUT",
       body: JSON.stringify(body),
       headers: { Accept: "application/json" },
@@ -111,7 +111,7 @@ const POST = <T extends { indexNumber: number }, S extends keyof T>(
   setStateLS: (data: T) => Promise<void>,
   setState: (value: React.SetStateAction<T[]>) => void,
   setErrorMessage: React.Dispatch<React.SetStateAction<string>>,
-  setTrigger?: (obj: {}) => void
+  setTrigger?: (obj: {}) => void,
 ) => {
   const updateLocalAfterPost = (response: {
     Authorization?: string;
@@ -125,7 +125,7 @@ const POST = <T extends { indexNumber: number }, S extends keyof T>(
     });
   };
   if (isUserLoggedIn(userID)) {
-    fetchWrapper<{ Authorization: string; data: T }>(URL, {
+    fetchWrapper<"application/json", { Authorization: string; data: T }>(URL, {
       method: "POST",
       body: JSON.stringify(body),
     }).then(({ response, error }) => {
@@ -159,7 +159,7 @@ const DELETE = <T>(
   deleteLS: (data: T) => Promise<void>,
   setState: (value: React.SetStateAction<T[]>) => void,
   setErrorMessage: React.Dispatch<React.SetStateAction<string>>,
-  setTrigger?: (obj: {}) => void
+  setTrigger?: (obj: {}) => void,
 ) => {
   const updateAfterDelete = (obj: T) => {
     deleteLS(obj).then(() => {
@@ -170,7 +170,7 @@ const DELETE = <T>(
     });
   };
   if (isUserLoggedIn(userID)) {
-    fetchWrapper<void>(URL, {
+    fetchWrapper<"application/x-empty">(URL, {
       method: "DELETE",
       headers: { Accept: "application/x-empty" },
     }).then(({ error }) => {
@@ -190,7 +190,7 @@ export const useWorkouts = (
   userID: number,
   routineID: number,
   setTrigger: React.Dispatch<React.SetStateAction<{}>>,
-  setErrorMessage: React.Dispatch<React.SetStateAction<string>>
+  setErrorMessage: React.Dispatch<React.SetStateAction<string>>,
 ) => {
   const [workouts, setWorkouts] = useState<WorkoutData[]>([]);
   useEffect(() => {
@@ -202,7 +202,7 @@ export const useWorkouts = (
         `${ORIGIN}/v1/users/${userID}/routines/${routineID}/workouts`,
         setWorkoutsIDB,
         setWorkouts,
-        setErrorMessage
+        setErrorMessage,
       );
     }
   }, [userID, routineID, setErrorMessage]);
@@ -220,21 +220,20 @@ export const useWorkouts = (
       addWorkoutIDB,
       setWorkouts,
       setErrorMessage,
-      setTrigger
+      setTrigger,
     );
   };
 
   const updateLocalAfterPut = (workout: WorkoutData) => {
-    putWorkoutIDB(workout).then(() => {
-      setWorkouts((workouts) => {
-        const index = workouts.findIndex(
-          ({ workoutID }) => workoutID === workout.workoutID
-        );
-        const start = workouts.slice(0, index);
-        const end = workouts.slice(index + 1);
-        return [...start, workout, ...end];
-      });
+    setWorkouts((workouts) => {
+      const index = workouts.findIndex(
+        ({ workoutID }) => workoutID === workout.workoutID,
+      );
+      const start = workouts.slice(0, index);
+      const end = workouts.slice(index + 1);
+      return [...start, workout, ...end];
     });
+    putWorkoutIDB(workout);
   };
 
   const putWorkout = useCallback(
@@ -249,15 +248,14 @@ export const useWorkouts = (
         body,
         putWorkoutIDB,
         setWorkouts,
-        setErrorMessage
+        setErrorMessage,
       );
     },
-    [userID, setErrorMessage]
+    [userID, setErrorMessage],
   );
 
-  const debouncePutWorkout = useMemo(
-    () => debounce(putWorkout, 500, updateLocalAfterPut),
-    [putWorkout]
+  const debouncePutWorkout = useRef(
+    debounce(putWorkout, 500, updateLocalAfterPut),
   );
 
   const deleteWorkout = async (workout: WorkoutData) => {
@@ -270,7 +268,7 @@ export const useWorkouts = (
       deleteWorkoutIDB,
       setWorkouts,
       setErrorMessage,
-      setTrigger
+      setTrigger,
     );
   };
   return {
@@ -278,14 +276,14 @@ export const useWorkouts = (
     putWorkout,
     postWorkout,
     deleteWorkout,
-    debouncePutWorkout,
+    debouncePutWorkout: debouncePutWorkout.current,
   };
 };
 
 export const useRoutines = (
   userID: number,
   trigger: {},
-  setErrorMessage: React.Dispatch<React.SetStateAction<string>>
+  setErrorMessage: React.Dispatch<React.SetStateAction<string>>,
 ) => {
   const [routines, setRoutines] = useState<RoutineData[]>([]);
   useEffect(() => {
@@ -297,7 +295,7 @@ export const useRoutines = (
         `${ORIGIN}/v1/users/${userID}/routines`,
         setRoutinesIDB,
         setRoutines,
-        setErrorMessage
+        setErrorMessage,
       );
     }
   }, [userID, trigger, setErrorMessage]);
@@ -314,7 +312,7 @@ export const useRoutines = (
       routines,
       setRoutineIDB,
       setRoutines,
-      setErrorMessage
+      setErrorMessage,
     );
   };
 
@@ -329,7 +327,7 @@ export const useRoutines = (
       body,
       setRoutineIDB,
       setRoutines,
-      setErrorMessage
+      setErrorMessage,
     );
   };
 
@@ -342,7 +340,7 @@ export const useRoutines = (
       routine,
       deleteRoutineIDB,
       setRoutines,
-      setErrorMessage
+      setErrorMessage,
     );
   };
   return {
@@ -353,23 +351,38 @@ export const useRoutines = (
   };
 };
 
-export const useToggle = <const A, const B>(initalValue: A, other: B) => {
-  const [state, setState] = useState<A | B>(initalValue);
-  const toggle = (newState?: A | B) =>
-    setState(newState ?? (state === initalValue ? other : initalValue));
+export const useToggle = <const A, const B>(initialValue: A, other: B) => {
+  const [state, setState] = useState<A | B>(initialValue);
+  const toggle = useCallback(
+    (newState?: A | B) =>
+      setState(
+        (prev) => newState ?? (prev === initialValue ? other : initialValue),
+      ),
+    [initialValue, other],
+  );
   return [state, toggle] as const;
 };
 
 export const useWindowEvent = <K extends keyof WindowEventMap>(
-  shouldReturnEarly: boolean,
   type: K,
   listener: (this: Window, ev: WindowEventMap[K]) => any,
-  deps?: React.DependencyList
+  deps?: React.DependencyList,
 ) => {
+  const listenerRef = useRef(listener);
+  listenerRef.current = listener;
+
   useEffect(() => {
-    if (shouldReturnEarly) return;
     const controller = new AbortController();
-    window.addEventListener(type, listener, { signal: controller.signal });
-    return () => controller.abort();
-  }, deps ?? []);
+    window.addEventListener(
+      type,
+      function (ev) {
+        listenerRef.current.call(this, ev);
+      },
+      { signal: controller.signal },
+    );
+    return () => {
+      controller.abort();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [type, ...(deps ?? [])]);
 };

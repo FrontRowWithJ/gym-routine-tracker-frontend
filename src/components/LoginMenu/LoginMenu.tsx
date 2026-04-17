@@ -18,7 +18,7 @@ import { ScriptContextProvider } from "@/components/ScriptContextProvider";
 const getLoggedInData = (
   setErrorMessage: React.Dispatch<React.SetStateAction<string>>,
   userID: number,
-  closeDialog: (event: React.BaseSyntheticEvent) => void
+  closeDialog: (event: React.BaseSyntheticEvent) => void,
 ) => {
   return {
     title: "Permanently Delete Account?",
@@ -42,7 +42,7 @@ const getLoggedInData = (
     ),
     deleteAction: (event: React.MouseEvent<HTMLElement, MouseEvent>) => {
       const token = localStorage.getItem("Authorization");
-      fetchWrapper<void>(`${ORIGIN}/v1/users/${userID}`, {
+      fetchWrapper<"application/x-empty">(`${ORIGIN}/v1/users/${userID}`, {
         method: "DELETE",
         headers: {
           Accept: "application/x-empty",
@@ -63,7 +63,7 @@ const getLoggedInData = (
 
 const getLoggedOutData = (
   closeDialog: (event: React.BaseSyntheticEvent) => void,
-  setUserID: React.Dispatch<React.SetStateAction<number>>
+  setUserID: React.Dispatch<React.SetStateAction<number>>,
 ) => {
   return {
     title: "Permanently Delete Data?",

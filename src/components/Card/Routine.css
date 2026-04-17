@@ -4,7 +4,7 @@
   overflow: hidden;
   position: relative;
   margin: 0.5rem;
-  border-radius: 4px;
+  border-radius: var(--border-radius);
   border: 1px solid var(--routine-border-color);
   cursor: pointer;
   height: fit-content;
@@ -12,7 +12,7 @@
   button {
     z-index: 1;
     margin: 0.5rem 0.5rem 0.5rem auto;
-    border-radius: 4px;
+    border-radius: var(--border-radius);
     background-color: var(--routine-button-border-color);
     &::before {
       opacity: 0.03 !important; /* override .ripple:hover::before opacity*/

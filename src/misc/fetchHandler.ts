@@ -8,94 +8,115 @@ type FetchError =
   | "InvalidText"
   | "MissingAcceptType";
 type AcceptType = "application/x-empty" | "application/json" | "text/plain";
-const allowedAcceptTypes: { [key in AcceptType]: "" } = {
-  "application/json": "",
-  "application/x-empty": "",
-  "text/plain": "",
+const allowedAcceptTypes = new Set<AcceptType>([
+  "application/json",
+  "application/x-empty",
+  "text/plain",
+]);
+
+type ResponseMap = {
+  "application/json": unknown;
+  "text/plain": string;
+  "application/x-empty": undefined;
 };
 
-export const fetchWrapper = <T>(
+type FetchResult<A extends AcceptType, T extends ResponseMap[A]> =
+  | { response: T; error: null }
+  | { response: null; error: FetchError };
+
+const isAcceptType = (str: unknown): str is AcceptType =>
+  allowedAcceptTypes.has(str as AcceptType);
+
+export const fetchWrapper = async <
+  A extends AcceptType,
+  T extends ResponseMap[A] = ResponseMap[A],
+>(
   input: RequestInfo | URL,
   {
     retries = 3,
     retryBaseDelay = 1000,
+    totalTimeoutMs = 5000,
     ...init
   }: {
     retries?: number;
     retryBaseDelay?: number;
+    totalTimeoutMs?: number;
     signal?: AbortSignal | null;
   } & Replace<
     RemoveOptional<RequestInit, "method">,
     {
-      headers: Record<string, string>;
+      headers: { Accept: A } & Record<string, string>;
       method: "DELETE" | "POST" | "PUT" | "GET" | "OPTIONS";
     }
-  >
-): Promise<
-  { response: T; error: null } | { response: null; error: FetchError }
-> => {
-  const execute = async (
-    attempt: number
-  ): Promise<
-    { response: T; error: null } | { response: null; error: FetchError }
-  > => {
-    init = applyDefaultRequestInitParams(init) as typeof init;
+  >,
+): Promise<FetchResult<A, T>> => {
+  const finalInit = applyDefaultRequestInitParams(init) as typeof init;
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), totalTimeoutMs);
+  finalInit.signal?.addEventListener("abort", () => controller.abort(), {
+    once: true,
+  });
+  const headers = new Headers(finalInit.headers);
+  const acceptType = headers.get("Accept");
+  if (!isAcceptType(acceptType)) {
+    return { response: null, error: "MissingAcceptType" };
+  }
+  const execute = async (attempt: number): Promise<FetchResult<A, T>> => {
     try {
-      const controller = new AbortController();
-      setTimeout(() => controller.abort(), 1000);
-      init.signal?.addEventListener("abort", controller.abort);
-      const acceptType = init?.headers?.["Accept"] as AcceptType;
-      if (!(acceptType in allowedAcceptTypes)) {
-        throw new Error("MissingAcceptType");
-      }
-      const response = await fetch(input, init);
+      const response = await fetch(input, {
+        ...finalInit,
+        signal: controller.signal,
+      });
+
       if (!response.ok) {
-        throw new Error(`Fetch error: HTTP error! Status:${response.status}`);
+        throw new Error("RequestFailed");
       }
-      try {
-        if (acceptType === "application/json") {
-          return { response: await response.json(), error: null };
-        } else if (acceptType === "text/plain") {
-          return { response: (await response.text()) as T, error: null };
-        }
-        return { response: "" as T, error: null };
-      } catch (dataError) {
-        if (attempt < retries) {
-          throw dataError;
-        } // jump to retry
-        if (acceptType === "application/json") {
-          return { response: null, error: "InvalidJSON" };
-        }
-        return { response: null, error: "InvalidText" };
+
+      let res;
+      if (acceptType === "application/json") {
+        res = await response.json().catch(() => {
+          throw new Error("InvalidJSON");
+        });
+      } else if (acceptType === "text/plain") {
+        res = await response.text().catch(() => {
+          throw new Error("InvalidText");
+        });
       }
+      return { response: res as T, error: null };
     } catch (error) {
-      if ((error as Error).name === "AbortError") {
+      const { message, name } = error as Error;
+      if (message === "InvalidJSON" || message === "InvalidText") {
+        return { response: null, error: message };
+      }
+      if (name === "AbortError") {
         return { response: null, error: "Timeout" };
-      } else if ((error as Error).message === "MissingAcceptType") {
-        return { response: null, error: "MissingAcceptType" };
-      } else if (attempt < retries) {
+      }
+
+      if (attempt < retries) {
         const delayMs = retryBaseDelay * 2 ** attempt;
-        return new Promise((resolve) =>
-          setTimeout(() => resolve(execute(attempt + 1)), delayMs)
-        );
+        await new Promise((r) => setTimeout(r, delayMs));
+        return execute(attempt + 1);
       }
       return { response: null, error: "RequestFailed" };
     }
   };
-  return execute(0);
+  const result = await execute(0);
+  clearTimeout(timeoutId);
+  return result;
 };
 
-export const debounce = <F extends (...args: any) => any>(
+export const debounce = <F extends (...args: any[]) => any>(
   func: F,
   timeout: number,
-  refresh?: F
-): ((...args: Parameters<F>) => Promise<ReturnType<F>>) => {
-  let timeoutID: number | undefined = undefined;
+  refresh?: F,
+): ((...args: Parameters<F>) => Promise<Awaited<ReturnType<F>>>) => {
+  let timeoutID: ReturnType<typeof setTimeout> | undefined = undefined;
   return (...args) => {
     clearTimeout(timeoutID);
     refresh?.(...args);
     return new Promise((resolve) => {
-      timeoutID = +setTimeout(() => resolve(func(...args)), timeout);
+      timeoutID = setTimeout(() => resolve(func(...args)), timeout);
     });
   };
 };

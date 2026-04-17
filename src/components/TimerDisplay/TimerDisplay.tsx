@@ -1,15 +1,19 @@
-import { TimerDisplayProps } from "./types";
+import { TimerDisplayProps, CountdownState } from "./types";
 import "./TimerDisplay.css";
 import {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
 import { Button } from "@/components/Button";
-import { Pause, PlayButton, Replay, Stop } from "@/resources/SVG";
+import { Stop } from "@/resources/SVG";
 import { bellring } from "@/resources/audio";
+import { ToggleCountdownButton } from "./ToggleContdownButton";
+import { Timestamp } from "@/components/Timer/types";
+import { cancelPushNotification, subscribeUserToPush } from "@/misc";
 
 const finishedSound = new Audio(bellring);
 finishedSound.loop = true;
@@ -21,62 +25,65 @@ const stopSound = () => {
 
 const playSound = () => finishedSound.play();
 const radius = 50;
-const strokeWidth = 5;
+const strokeWidth = 2;
 
 export const SECONDS_PER_MINUTE = 60;
+export const MINUTES_PER_HOUR = 60;
+export const HOURS_PER_DAY = 24;
 export const SECONDS_PER_HOUR = 3600;
+export const MILLISECONDS_PER_SECOND = 1000;
 
-const sendNotification = (
-  notificationRef: React.RefObject<Notification | null>,
-  stopVibration: () => void
-) => {
-  Notification.requestPermission().then((permission) => {
-    if (permission === "granted") {
-      notificationRef.current = new Notification("00:00 ⌛ Time's up!", {
-        dir: "auto",
-        silent: false,
-        requireInteraction: true,
-      });
-      notificationRef.current.addEventListener("close", () => {
-        stopVibration();
-        stopSound();
-      });
-    }
-  });
-};
-
-export const TimerDisplay = ({ stopTimer, ...rest }: TimerDisplayProps) => {
+export const TimerDisplay = ({
+  stopTimer,
+  hour,
+  minute,
+  second,
+}: TimerDisplayProps) => {
   const circleRef = useRef<SVGCircleElement>(null);
-  const [time, setTime] = useState(rest);
-  const [timerState, setTimerState] = useState<
-    "active" | "inactive" | "finished"
-  >("active");
+  const initialTimeRef = useRef(performance.now());
+  const pauseOffset = useRef(0);
+  const pauseOffsetTally = useRef(0);
+  const [time, setTime] = useState<Timestamp>({ hour, minute, second });
+  const [countdownState, setCountdownState] =
+    useState<CountdownState>("active");
   const requestRef = useRef<number>(0);
   const animationRef = useRef<Animation>(null);
   const notificationRef = useRef<Notification>(null);
-  const vibrateInterval = useRef<NodeJS.Timer>(null);
-  const totalSeconds =
-    rest.hour * SECONDS_PER_HOUR +
-    rest.minute * SECONDS_PER_MINUTE +
-    rest.second;
-  const initalTimeRef = useRef(performance.now());
-  const pauseOffset = useRef(0);
-  const pauseOffsetTally = useRef(0);
+  const vibrateInterval = useRef<ReturnType<typeof setInterval>>(null);
+  const notificationIDRef = useRef<string | null>(null);
 
-  const closeNotification = () => notificationRef.current?.close();
+  const totalSeconds = useMemo(
+    () => hour * SECONDS_PER_HOUR + minute * SECONDS_PER_MINUTE + second,
+    [hour, minute, second],
+  );
 
-  const startVibration = () => {
+  const closeNotification = useCallback(
+    () => notificationRef.current?.close(),
+    [],
+  );
+
+  const startVibration = useCallback(() => {
     if (navigator.vibrate) {
-      vibrateInterval.current = setInterval(() => navigator.vibrate(500), 1000);
+      vibrateInterval.current = setInterval(
+        () => navigator.vibrate(500),
+        1 * MILLISECONDS_PER_SECOND,
+      );
     }
-  };
-  const stopVibration = () => {
+  }, []);
+
+  const stopVibration = useCallback(() => {
     clearInterval(vibrateInterval.current ?? 0);
-  };
+  }, []);
+
+  const stopLabelAnimation = useCallback(
+    () => cancelAnimationFrame(requestRef.current),
+    [],
+  );
 
   const animateLabel = useCallback(() => {
     const secondsElapsed = Math.floor(
-      (performance.now() - (initalTimeRef.current + pauseOffset.current)) / 1000
+      (performance.now() - (initialTimeRef.current + pauseOffset.current)) /
+        MILLISECONDS_PER_SECOND,
     );
     if (secondsElapsed <= totalSeconds) {
       let t = totalSeconds - secondsElapsed;
@@ -99,18 +106,68 @@ export const TimerDisplay = ({ stopTimer, ...rest }: TimerDisplayProps) => {
     } else {
       stopLabelAnimation();
     }
-  }, [totalSeconds]);
-  const startLabelAnimation = () =>
-    (requestRef.current = requestAnimationFrame(animateLabel));
-  const stopLabelAnimation = () => cancelAnimationFrame(requestRef.current);
-  const pauseLabelAnimation = stopLabelAnimation;
-  const startCircleAnimation = () => animationRef.current?.play();
-  const pauseCircleAnimation = () => animationRef.current?.pause();
-  const cancelCircleAnimation = () => {
+  }, [totalSeconds, stopLabelAnimation]);
+
+  const startLabelAnimation = useCallback(
+    () => (requestRef.current = requestAnimationFrame(animateLabel)),
+    [animateLabel],
+  );
+  const startCircleAnimation = useCallback(
+    () => animationRef.current?.play(),
+    [],
+  );
+  const pauseCircleAnimation = useCallback(
+    () => animationRef.current?.pause(),
+    [],
+  );
+  const cancelCircleAnimation = useCallback(() => {
     animationRef.current?.cancel();
     animationRef.current = null;
-  };
+  }, []);
 
+  const onPause = useCallback(() => {
+    pauseOffsetTally.current = performance.now();
+    pauseCircleAnimation();
+    stopLabelAnimation();
+    if (notificationIDRef.current) {
+      cancelPushNotification(notificationIDRef.current);
+      notificationIDRef.current = null;
+    }
+    setCountdownState("inactive");
+  }, [pauseCircleAnimation, stopLabelAnimation]);
+
+  const onResume = useCallback(() => {
+    if (countdownState === "inactive") {
+      pauseOffset.current += performance.now() - pauseOffsetTally.current;
+    } else {
+      initialTimeRef.current = performance.now();
+      pauseOffset.current = pauseOffsetTally.current = 0;
+      setTime({ hour, minute, second });
+      closeNotification();
+    }
+    const secondsElapsed = Math.floor(
+      (performance.now() - (initialTimeRef.current + pauseOffset.current)) /
+        MILLISECONDS_PER_SECOND,
+    );
+    const remainingMs =
+      (totalSeconds - secondsElapsed) * MILLISECONDS_PER_SECOND;
+    subscribeUserToPush(remainingMs).then((notificationID) => {
+      notificationIDRef.current = notificationID;
+      stopSound();
+      startLabelAnimation();
+      startCircleAnimation();
+      setCountdownState("active");
+    });
+  }, [
+    startLabelAnimation,
+    startCircleAnimation,
+    closeNotification,
+    countdownState,
+    totalSeconds,
+    hour,
+    minute,
+    second,
+  ]);
   useLayoutEffect(() => {
     if (circleRef.current) {
       const { current: circle } = circleRef;
@@ -126,15 +183,15 @@ export const TimerDisplay = ({ stopTimer, ...rest }: TimerDisplayProps) => {
           fill: "forwards",
           delay: 0,
           iterations: 1,
-          duration: totalSeconds * 1000,
-        }
+          duration: totalSeconds * MILLISECONDS_PER_SECOND,
+        },
       );
       animationRef.current = new Animation(keyframeEffect, document.timeline);
       animationRef.current.addEventListener("finish", () => {
         playSound();
         startVibration();
-        sendNotification(notificationRef, stopVibration);
-        setTimerState("finished");
+        setCountdownState("finished");
+        notificationIDRef.current = null;
       });
     }
     startCircleAnimation();
@@ -144,56 +201,49 @@ export const TimerDisplay = ({ stopTimer, ...rest }: TimerDisplayProps) => {
       stopSound();
       cancelCircleAnimation();
     };
-  }, [totalSeconds]);
+  }, [
+    totalSeconds,
+    startCircleAnimation,
+    cancelCircleAnimation,
+    closeNotification,
+    startVibration,
+    stopVibration,
+  ]);
+
+  useEffect(() => {
+    const handler = (event: MessageEvent) => {
+      if (event.data?.type === "TIMER_FINISHED") {
+        startVibration();
+        playSound();
+        setCountdownState("finished");
+        notificationIDRef.current = null;
+      }
+    };
+    navigator.serviceWorker.addEventListener("message", handler);
+    return () =>
+      navigator.serviceWorker.removeEventListener("message", handler);
+  }, [startVibration]);
 
   useEffect(() => {
     requestRef.current = requestAnimationFrame(animateLabel);
     return () => cancelAnimationFrame(requestRef.current);
   }, [animateLabel]);
-  const setButton = (t: typeof timerState) => {
-    if (t === "active") {
-      return (
-        <Button
-          onClick={() => {
-            pauseOffsetTally.current = performance.now();
-            pauseCircleAnimation();
-            pauseLabelAnimation();
-            setTimerState("inactive");
-          }}
-        >
-          <Pause />
-        </Button>
-      );
-    }
-    return (
-      <Button
-        onClick={() => {
-          if (t === "inactive") {
-            pauseOffset.current += performance.now() - pauseOffsetTally.current;
-          } else {
-            initalTimeRef.current = performance.now();
-            pauseOffset.current = pauseOffsetTally.current = 0;
-            setTime(rest);
-            closeNotification();
-          }
-          startLabelAnimation();
-          startCircleAnimation();
-          setTimerState("active");
-        }}
-      >
-        {t === "inactive" ? <PlayButton /> : <Replay />}
-      </Button>
+
+  useEffect(() => {
+    subscribeUserToPush(totalSeconds * MILLISECONDS_PER_SECOND).then(
+      (id) => (notificationIDRef.current = id),
     );
-  };
+  }, [totalSeconds]);
+
   return (
     <div className="timer-display">
       <div className="timer-display-container">
         <div className="timer-label">
-          <span>{("" + time.hour).padStart(2, "0")}</span>
+          <span>{`0${time.hour}`.slice(-2)}</span>
           <span>:</span>
-          <span>{("" + time.minute).padStart(2, "0")}</span>
+          <span>{`0${time.minute}`.slice(-2)}</span>
           <span>:</span>
-          <span>{("" + time.second).padStart(2, "0")}</span>
+          <span>{`0${time.second}`.slice(-2)}</span>
         </div>
         <svg
           className="timer-circle"
@@ -201,17 +251,37 @@ export const TimerDisplay = ({ stopTimer, ...rest }: TimerDisplayProps) => {
           viewBox={`0 0 ${radius * 2} ${radius * 2}`}
         >
           <circle
+            cx={radius}
+            cy={radius}
+            r={radius - strokeWidth / 2}
+            strokeWidth={strokeWidth}
+            strokeLinecap={"round"}
+          />
+          <circle
             ref={circleRef}
             cx={radius}
             cy={radius}
             r={radius - strokeWidth / 2}
             strokeWidth={strokeWidth}
+            strokeLinecap={"round"}
           />
         </svg>
       </div>
       <div className="button-container">
-        {setButton(timerState)}
-        <Button onClick={stopTimer}>
+        <ToggleCountdownButton
+          countdownState={countdownState}
+          onPause={onPause}
+          onResume={onResume}
+        />
+        <Button
+          onClick={() => {
+            if (notificationIDRef.current) {
+              cancelPushNotification(notificationIDRef.current);
+              notificationIDRef.current = null;
+            }
+            stopTimer();
+          }}
+        >
           <Stop />
         </Button>
       </div>

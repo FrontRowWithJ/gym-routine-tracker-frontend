@@ -13,7 +13,7 @@ export const generateRandomString = (numOfBytes: number) => {
   // Encode as UTF-8
   const utf8Encoder = new TextEncoder();
   const utf8Array = utf8Encoder.encode(
-    String.fromCharCode.apply(null, randomValues as any)
+    String.fromCharCode.apply(null, randomValues as any),
   );
   // Base64 encode the UTF-8 data
   return btoa(String.fromCharCode.apply(null, utf8Array as any))
@@ -27,9 +27,9 @@ export const parseJWT = <
     header: Record<string, any>;
     payload: Record<string, any>;
     signature: string;
-  }
+  },
 >(
-  token: string
+  token: string,
 ): JWT => {
   const parts = token.split(".");
   if (parts.length !== 3) throw new Error("Invalid token");
@@ -46,7 +46,7 @@ export const parseJWT = <
 };
 
 export const applyDefaultRequestInitParams = (
-  requestInit: RemoveOptional<RequestInit, "method">
+  requestInit: RemoveOptional<RequestInit, "method">,
 ): RequestInit => {
   const token = localStorage.getItem("Authorization");
   const { headers, ...rest } = requestInit;

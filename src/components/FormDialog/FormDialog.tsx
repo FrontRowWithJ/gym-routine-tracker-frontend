@@ -24,10 +24,14 @@ export const FormDialog = () => {
     ConfirmDeleteDialog();
 
   useWindowEvent(
-    !isDialogOpen,
     "keydown",
-    ({ code }) => code === "Escape" && setIsDialogOpen(false),
-    [isDialogOpen]
+    ({ code }) => {
+      if (!isDialogOpen) return;
+      if (code === "Escape") {
+        setIsDialogOpen(false);
+      }
+    },
+    [isDialogOpen],
   );
 
   const Dialog = ({

@@ -7,6 +7,9 @@ import { CreateOrEditWorkoutDialog } from "@/components/CreateOrEditWorkoutDialo
 import { Fragment } from "react";
 import { useWorkouts } from "@/misc/hooks";
 import { useErrorBanner } from "@/components/ErrorBanner";
+import { TimerDialog } from "@/components/TimerDialog";
+import { Button } from "../Button";
+import { Timer } from "@/resources/SVG";
 
 export const WorkoutPage = ({
   userID,
@@ -22,6 +25,7 @@ export const WorkoutPage = ({
     deleteWorkout,
     debouncePutWorkout,
   } = useWorkouts(userID, routineID, setTrigger, setErrorMessage);
+  const [open, TimerScreen] = TimerDialog();
   return (
     <>
       <ErrorBanner />
@@ -37,8 +41,16 @@ export const WorkoutPage = ({
           <Divider width="90%" margin="0.5rem" />
         </Fragment>
       ))}
-      <Divider backgroundColor="transparent" margin="2.5rem"/>
-      <CreateButton onClick={openDialog} label="Create Workout" />
+      <Divider backgroundColor="red" margin="2.5rem" />
+      <Button className="timer-button static-noise" onClick={open}>
+        <Timer />
+      </Button>
+      <CreateButton
+        onClick={openDialog}
+        label="Create Workout"
+        className="create-workout-button"
+      />
+      <TimerScreen />
       <Dialog
         label="Create"
         className="create-workout-dialog"

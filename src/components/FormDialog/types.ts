@@ -3,8 +3,8 @@ import { ConfirmDeleteDialogProps } from "@/components/ConfirmDeleteDialog";
 export type DialogProps = {
   label: "Create" | "Edit";
   width?: string;
-  reset: () => void;
-  save: () => void;
-  deleteAction?: () => void;
+  reset: VoidFunction;
+  save: VoidFunction;
+  deleteAction?: VoidFunction;
 } & React.DialogHTMLAttributes<HTMLDialogElement> &
   ConfirmDeleteDialogProps;

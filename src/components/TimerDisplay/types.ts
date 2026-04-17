@@ -1,5 +1,7 @@
 import { Timestamp } from "@/components/Timer";
 
 export type TimerDisplayProps = {
-  stopTimer: () => void;
+  stopTimer: VoidFunction;
 } & Timestamp;
+
+export type CountdownState = "active" | "inactive" | "finished";

@@ -7,26 +7,27 @@ import {
   useTheme,
 } from "@/components/ThemeContextProvider";
 import { initDB } from "./misc";
-import { Timer } from "@/components/Timer";
 
 initDB();
 const root = ReactDOM.createRoot(document.body);
 const Favicon = () => {
   const [theme] = useTheme();
-  const rels = ["icon", "apple-touch-icon"];
-  const hrefs = [`/favicon-${theme}.ico`, `logo-${theme}192.png`];
-  rels.forEach((rel, i) => {
+  const data = [
+    { rel: "icon", href: `/favicon-${theme}.ico` },
+    { rel: "apple-touch-icon", href: `logo-${theme}192.png` },
+  ];
+  data.forEach(({ rel, href }) => {
     (document.querySelector(`link[rel="${rel}"]`) as HTMLLinkElement).href =
-      hrefs[i];
+      href;
   });
   return null;
 };
+
 root.render(
   <React.StrictMode>
     <ThemeContextProvider>
       <Favicon />
-      {/* <Main /> */}
-      <Timer />
+      <Main />
     </ThemeContextProvider>
-  </React.StrictMode>
+  </React.StrictMode>,
 );

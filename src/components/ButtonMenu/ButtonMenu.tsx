@@ -17,7 +17,6 @@ export const ButtonMenu = ({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useWindowEvent(
-    false,
     "click",
     (event) => {
       if (!buttonMenuRef.current || !toggleMenuRef.current) return;
@@ -25,7 +24,7 @@ export const ButtonMenu = ({
       const isMenuButton = toggleMenuRef.current === event.target;
       if (!isMenuButton && !isMenuItem) setIsMenuOpen(false);
     },
-    [buttonMenuRef]
+    [],
   );
   return (
     <div className="button-menu-container">

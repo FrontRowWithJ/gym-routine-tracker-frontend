@@ -10,8 +10,7 @@ export const Button = (props: ButtonProps) => {
         {...{
           ...props,
           onClick: props.disabled ? NOOP : props.onClick,
-          className: `ui-button ${props.className ?? ""} 
-          ${props.disabled ? "ui-disabled" : ""}`,
+          className: `ui-button ${props.className ?? ""} ${props.disabled ? "ui-disabled" : ""}`,
         }}
       >
         {props.children}

@@ -19,7 +19,7 @@
     transition: translate cubic-bezier(0.33, 1, 0.68, 1) 250ms;
     margin: 0;
     padding: 0;
-    border-radius: 4px 0 0 4px;
+    border-radius: var(--border-radius) 0 0 var(--border-radius);
     header {
       width: 100%;
       display: flex;
