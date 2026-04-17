@@ -232,16 +232,6 @@ export const TimerDisplay = ({
       navigator.serviceWorker.removeEventListener("message", handler);
   }, [startVibration, stopVibration, closeNotification]);
 
-  useEffect(() => {
-    const handler = (event: MessageEvent) => {
-      if (event.data?.type === "TIMER_NOTIFICATION_CLOSED") {
-        // handle dismissal
-      }
-    };
-    navigator.serviceWorker.addEventListener("message", handler);
-    return () =>
-      navigator.serviceWorker.removeEventListener("message", handler);
-  }, []);
 
   useEffect(() => {
     requestRef.current = requestAnimationFrame(animateLabel);
