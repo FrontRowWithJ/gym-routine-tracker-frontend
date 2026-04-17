@@ -28,11 +28,11 @@ export const GoogleButton = ({ setUserID }: GoogleButtonProps) => {
         } else {
           const g_csrf_token = generateRandomString(16);
           const fiveMinutesUTCString = new Date(
-            Date.now() + FIVE_MINUTES
+            Date.now() + FIVE_MINUTES,
           ).toUTCString();
           const cookieAttributes = `Domain=${window.location.hostname}; Expires=${fiveMinutesUTCString}; Max-age=${FIVE_MINUTES}; Path=/v1/auth/google; secure; Samesite=strict; Secure`;
           document.cookie = `g_csrf_token=${g_csrf_token}; ${cookieAttributes}`;
-          fetchWrapper<string>(`${ORIGIN}/v1/auth/google`, {
+          fetchWrapper<"text/plain">(`${ORIGIN}/v1/auth/google`, {
             method: "POST",
             cache: "default",
             credentials: "include",

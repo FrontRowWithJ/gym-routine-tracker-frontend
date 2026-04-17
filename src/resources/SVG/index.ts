@@ -19,3 +19,8 @@ export * from "./Home";
 export * from "./DottedPattern";
 export * from "./PlayButton";
 export * from "./Logo";
+export * from "./Pause";
+export * from "./Stop";
+export * from "./Replay";
+export * from "./Timer";
+export * from "./PlayArrow";

@@ -33,7 +33,7 @@
   }
 
   form {
-    border-radius: 4px;
+    border-radius: var(--border-radius);
     header {
       all: unset;
       display: flex;

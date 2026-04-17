@@ -1,6 +1,6 @@
 .error-banner {
   position: fixed;
-  border-radius: 4px;
+  border-radius: var(--border-radius);
   inset: 1rem;
   width: calc(100% - 2rem);
   height: 3rem;

@@ -1,6 +1,6 @@
 export type CounterProps = {
   placeholder: string;
   value: number;
-  increment: () => void;
-  decrement: () => void;
+  increment: VoidFunction;
+  decrement: VoidFunction;
 };

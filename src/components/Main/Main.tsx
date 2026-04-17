@@ -36,7 +36,7 @@ const animateBackground = (direction: "forwards" | "reverse") => {
       document.body.classList.remove(...classNames);
       controller.abort();
     },
-    { signal: controller.signal }
+    { signal: controller.signal },
   );
   document.body.classList.add(...classNames);
 };

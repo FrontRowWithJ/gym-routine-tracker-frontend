@@ -6,7 +6,7 @@
   margin: 0 0.5rem;
   height: 9rem;
   display: flex;
-  border-radius: 4px;
+  border-radius: var(--border-radius);
   position: relative;
   overflow: hidden;
   color: var(--text-color);
@@ -21,7 +21,7 @@
     justify-content: center;
     align-items: center;
     picture {
-      border-radius: 4px;
+      border-radius: var(--border-radius);
       overflow: hidden;
       margin: 0 4px;
       img {
@@ -78,7 +78,7 @@
       flex-direction: row;
       justify-content: space-evenly;
       align-items: center;
-      border-radius: 4px;
+      border-radius: var(--border-radius);
       border: var(--border-width) solid var(--static-noise-bg);
       font-size: 1.2rem;
       button {
@@ -99,7 +99,7 @@
     inset: 0.5rem 0.5rem auto auto;
     width: 2.5rem;
     height: 2.5rem;
-    border-radius: 4px;
+    border-radius: var(--border-radius);
   }
 }
 

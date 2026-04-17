@@ -4,6 +4,9 @@ export const ORIGIN =
     ? "http://localhost:3001"
     : "https://machrino.me";
 
+
 export const DEFAULT_ERROR_MESSAGE = "Server error. Try again later.";
-export const OPEN = true;
-export const CLOSE = false;
+
+export const OFF = 0;
+export const MOUSE_DOWN = 1;
+export const DRAGGING = 2;

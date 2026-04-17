@@ -40,7 +40,7 @@ interface IdConfiguration {
   state_cookie_domain?: string;
   ux_mode?: "popup" | "redirect";
   allowed_parent_origin?: string | string[];
-  intermediate_iframe_close_callback?: () => void;
+  intermediate_iframe_close_callback?: VoidFunction;
   itp_support?: boolean;
   login_hint?: string;
   hd?: string;
@@ -95,7 +95,7 @@ interface GsiButtonConfiguration {
   logo_alignment?: "left" | "center";
   width?: string;
   locale?: string;
-  click_listener?: () => void;
+  click_listener?: VoidFunction;
   state?: string;
 }
 
@@ -113,15 +113,15 @@ interface Window {
           parent: HTMLElement,
           options: GsiButtonConfiguration
         ) => void;
-        disableAutoSelect: () => void;
+        disableAutoSelect: VoidFunction;
         storeCredential: (
           credential: Credential,
-          callback?: () => void
+          callback?: VoidFunction
         ) => void;
-        cancel: () => void;
+        cancel: VoidFunction;
         revoke: (login_hint: string, callback: RevocationResponse) => void;
       };
     };
   };
-  onGoogleLibraryLoad?: () => void;
+  onGoogleLibraryLoad?: VoidFunction;
 }

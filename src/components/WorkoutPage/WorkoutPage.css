@@ -1,5 +1,26 @@
+:root {
+  --timer-button-width: 56px;
+}
+
 .create-workout-dialog {
   form {
     --hue: 0;
   }
+}
+
+.timer-button {
+  position: absolute;
+  height: var(--timer-button-width);
+  width: var(--timer-button-width);
+  inset: auto 1rem 1rem 1rem;
+  svg {
+    width: unset;
+    height: 70%;
+  }
+}
+
+.create-workout-button {
+  /* modified to allow @/components/TimerButton to fit */
+  inset: auto 1rem 1rem calc(2rem + var(--timer-button-width));
+  width: calc(100% - 3rem - var(--timer-button-width));
 }

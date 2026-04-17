@@ -1,32 +1,32 @@
 import { YoutubeVideoPlayerProps } from "./types";
 import "./YoutubeVideoPlayer.css";
-import { useEffect, useState } from "react";
-import { OPEN, CLOSE } from "@/misc";
+import { useState } from "react";
+import { useWindowEvent } from "@/misc/hooks";
 
 export const YoutubeVideoPlayer = () => {
-  const [isDialogOpen, setIsDialogOpen] = useState(CLOSE);
-  const setDialog = (event: React.BaseSyntheticEvent, state: boolean) => {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const setDialog = (event: React.BaseSyntheticEvent, isOpen: boolean) => {
     event.stopPropagation();
-    setIsDialogOpen(state);
+    setIsDialogOpen(isOpen);
   };
 
-  useEffect(() => {
-    if (!isDialogOpen) return;
-    const controller = new AbortController();
-    window.addEventListener(
-      "keydown",
-      ({ code }) => code === "Escape" && setIsDialogOpen(CLOSE),
-      { signal: controller.signal }
-    );
-    return () => controller.abort();
-  }, [isDialogOpen]);
+  useWindowEvent(
+    "keydown",
+    ({ code }) => {
+      if (!isDialogOpen) return;
+      if (code === "Escape") {
+        setIsDialogOpen(false);
+      }
+    },
+    [isDialogOpen],
+  );
 
   const YoutubePlayerDialog = (props: YoutubeVideoPlayerProps) => (
     <dialog
       className="youtube-player-dialog"
       open={isDialogOpen}
       onClick={(event) => {
-        if (event.target === event.currentTarget) setDialog(event, CLOSE);
+        if (event.target === event.currentTarget) setDialog(event, false);
       }}
     >
       <div className="youtube-player">
@@ -40,7 +40,7 @@ export const YoutubeVideoPlayer = () => {
     </dialog>
   );
   return [
-    (event: React.BaseSyntheticEvent) => setDialog(event, OPEN),
+    (event: React.BaseSyntheticEvent) => setDialog(event, true),
     YoutubePlayerDialog,
   ] as const;
 };

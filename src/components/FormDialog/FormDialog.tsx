@@ -1,36 +1,38 @@
 import { DialogProps } from "./types";
 import "./FormDialog.css";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/Button";
 import { Bin, Close, Save, Undo } from "@/resources/SVG";
 import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
-import { OPEN, CLOSE } from "@/misc";
+import { useWindowEvent } from "@/misc/hooks";
 
 export const FormDialog = () => {
-  const [isDialogOpen, setIsDialogOpen] = useState(CLOSE);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+
   const openDialog = (event: React.BaseSyntheticEvent) => {
     event.stopPropagation();
-    setIsDialogOpen(OPEN);
+    setIsDialogOpen(true);
   };
+
   const closeDialog = (event: React.BaseSyntheticEvent) => {
     event.stopPropagation();
-    setIsDialogOpen(CLOSE);
+    setIsDialogOpen(false);
   };
 
   const [openConfirmDialog, closeConfirmDialog, ConfirmDialog] =
     ConfirmDeleteDialog();
 
-  useEffect(() => {
-    if (!isDialogOpen) return;
-    const controller = new AbortController();
-    window.addEventListener(
-      "keydown",
-      ({ code }) => code === "Escape" && setIsDialogOpen(CLOSE),
-      { signal: controller.signal }
-    );
-    return () => controller.abort();
-  }, [isDialogOpen]);
+  useWindowEvent(
+    "keydown",
+    ({ code }) => {
+      if (!isDialogOpen) return;
+      if (code === "Escape") {
+        setIsDialogOpen(false);
+      }
+    },
+    [isDialogOpen],
+  );
 
   const Dialog = ({
     children,

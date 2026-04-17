@@ -24,7 +24,7 @@ const _useTheme = () => {
       document.documentElement.setAttribute("data-theme", t);
       localStorage.setItem("theme", t);
     },
-    [theme]
+    [theme],
   );
   useEffect(() => {
     const controller = new AbortController();
@@ -34,21 +34,21 @@ const _useTheme = () => {
         if (key === "theme" && (newValue === "dark" || newValue === "light"))
           setTheme(newValue);
       },
-      { signal: controller.signal }
+      { signal: controller.signal },
     );
     window
       .matchMedia(MATCH_MEDIA_QUERY)
       .addEventListener(
         "change",
         (e) => setTheme(e.matches ? "dark" : "light"),
-        { signal: controller.signal }
+        { signal: controller.signal },
       );
     return () => controller.abort();
   }, [setTheme]);
   return [theme, () => setTheme()] as const;
 };
 
-const ThemeContext = createContext<readonly [Theme, () => void]>([
+const ThemeContext = createContext<readonly [Theme, VoidFunction]>([
   "dark",
   NOOP,
 ]);

@@ -4,7 +4,7 @@
     flex-direction: column;
     width: 90%;
     align-items: center;
-    border-radius: 4px;
+    border-radius: var(--border-radius);
     color: var(--text-color);
     --hue: 0;
     transition: opacity cubic-bezier(0.33, 1, 0.68, 1) 300ms;

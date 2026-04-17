@@ -3,7 +3,7 @@
   width: 100%;
   justify-content: space-between;
   border: 2px solid var(--static-noise-bg);
-  border-radius: 4px;
+  border-radius: var(--border-radius);
   align-items: center;
   color: var(--label-color);
   margin: 0px;
@@ -23,7 +23,7 @@
     > div {
       display: flex;
       align-items: center;
-      border-radius: 4px;
+      border-radius: var(--border-radius);
     }
     label {
       white-space: nowrap;
