@@ -14,7 +14,7 @@ export const registerServiceWorker = async () => {
     if (rej) return rej;
   }
   return new Promise<null | ServiceWorkerRegistration>((resolve, reject) => {
-    if (!("serviceWorker" in navigator)) {  
+    if (!("serviceWorker" in navigator)) {
       const errorMessage =
         "Registration error: navigator.serviceWorker is undefined";
       console.error(errorMessage);
@@ -42,21 +42,23 @@ export const registerServiceWorker = async () => {
 };
 
 const registerValidSW = async (swUrl: string) => {
+  let registration: ServiceWorkerRegistration;
   try {
-    const registration = await navigator.serviceWorker.register(swUrl);
-    if (navigator.serviceWorker.controller) {
-      return registration;
-    }
-
-    return new Promise<ServiceWorkerRegistration>((resolve) => {
-      navigator.serviceWorker.addEventListener("controllerchange", () => {
-        resolve(registration);
-      });
-    });
-  } catch (error) {
-    console.error("Registration failed: ", error);
+    registration = await navigator.serviceWorker.register(swUrl);
+  } catch (e) {
+    console.error("Error during service worker registration:", e);
     return null;
   }
+  registration.onupdatefound = () => {
+    const installingWorker = registration.installing;
+    if (installingWorker === null) return;
+    installingWorker.onstatechange = () => {
+      if (installingWorker.state !== "installed") return;
+      if (navigator.serviceWorker.controller === null)
+        return console.log("Content is cached for offline use.");
+    };
+  };
+  return registration;
 };
 
 export const unregister = async () => {
