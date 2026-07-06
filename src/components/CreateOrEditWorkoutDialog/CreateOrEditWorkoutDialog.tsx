@@ -65,7 +65,7 @@ export const CreateOrEditWorkoutDialog = () => {
             value={workoutData.workoutName}
             onInput={({ currentTarget }) => {
               currentTarget.setCustomValidity(
-                validateName(currentTarget.value)
+                validateName(currentTarget.value),
               );
             }}
             onChange={({ target: { value } }) =>
@@ -112,14 +112,19 @@ export const CreateOrEditWorkoutDialog = () => {
               min={1}
               required
               placeholder="increment"
-              type="number"
+              type="text"
               value={workoutData.increment}
-              onChange={({ target: { value } }) =>
-                dispatch({
-                  type: "increment",
-                  value: value ? +value : workoutData.increment,
-                })
-              }
+              onChange={({ target: { value } }) => {
+                let newValue: number;
+                if (value === "") {
+                  newValue = 0;
+                } else if (!isNaN(+value)) {
+                  newValue = +value;
+                } else {
+                  newValue = workoutData.increment;
+                }
+                dispatch({ type: "increment", value: newValue });
+              }}
             />
             <Counter
               placeholder="Weight"
@@ -135,7 +140,7 @@ export const CreateOrEditWorkoutDialog = () => {
                   type: "weight",
                   value: Math.max(
                     0,
-                    workoutData.weight - workoutData.increment
+                    workoutData.weight - workoutData.increment,
                   ),
                 });
               }}
@@ -147,7 +152,7 @@ export const CreateOrEditWorkoutDialog = () => {
             value={workoutData.youtubeID}
             onInput={({ currentTarget }) =>
               currentTarget.setCustomValidity(
-                validateYoutubeURL(currentTarget.value)
+                validateYoutubeURL(currentTarget.value),
               )
             }
             onChange={({ target: { value } }) =>
