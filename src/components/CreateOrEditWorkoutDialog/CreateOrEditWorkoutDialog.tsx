@@ -25,6 +25,13 @@ const validateYoutubeURL = (url: string) => {
     : "";
 };
 
+const sanitizeValue = (value: string, fallback: number) => {
+  if (value === "") return 0;
+  const coerced = +value;
+  if (!isNaN(coerced)) return coerced;
+  return fallback;
+};
+
 export const CreateOrEditWorkoutDialog = () => {
   const [openDialog, DialogWrapper] = FormDialog();
 
@@ -78,11 +85,12 @@ export const CreateOrEditWorkoutDialog = () => {
               required
               placeholder="Number of sets"
               type="number"
+              inputMode="numeric"
               value={workoutData.setCount}
               onChange={({ target: { value } }) =>
                 dispatch({
                   type: "setCount",
-                  value: value ? +value : workoutData.setCount,
+                  value: sanitizeValue(value, workoutData.setCount),
                 })
               }
             />
@@ -91,11 +99,12 @@ export const CreateOrEditWorkoutDialog = () => {
               min={1}
               placeholder="Reps per set"
               type="number"
+              inputMode="numeric"
               value={workoutData.repCount}
               onChange={({ target: { value } }) => {
                 dispatch({
                   type: "repCount",
-                  value: value ? +value : workoutData.repCount,
+                  value: sanitizeValue(value, workoutData.repCount),
                 });
               }}
             />
@@ -113,17 +122,13 @@ export const CreateOrEditWorkoutDialog = () => {
               required
               placeholder="increment"
               type="text"
+              inputMode="numeric"
               value={workoutData.increment}
               onChange={({ target: { value } }) => {
-                let newValue: number;
-                if (value === "") {
-                  newValue = 0;
-                } else if (!isNaN(+value)) {
-                  newValue = +value;
-                } else {
-                  newValue = workoutData.increment;
-                }
-                dispatch({ type: "increment", value: newValue });
+                dispatch({
+                  type: "increment",
+                  value: sanitizeValue(value, workoutData.increment),
+                });
               }}
             />
             <Counter
