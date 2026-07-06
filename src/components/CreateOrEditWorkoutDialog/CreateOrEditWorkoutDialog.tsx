@@ -28,8 +28,7 @@ const validateYoutubeURL = (url: string) => {
 const sanitizeValue = (value: string, fallback: number) => {
   if (value === "") return 0;
   const coerced = +value;
-  if (!isNaN(coerced)) return coerced;
-  return fallback;
+  return isNaN(coerced) ? fallback : coerced;
 };
 
 export const CreateOrEditWorkoutDialog = () => {
