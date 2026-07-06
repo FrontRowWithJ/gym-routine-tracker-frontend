@@ -11,13 +11,7 @@ const getHue = (s: string) => {
   const bytes = hashString(s);
   return (bytes[0] | ((bytes[1] & 0b1) << 8)) % 360;
 };
-export const Workout = ({
-  PUT,
-  POST,
-  DELETE,
-  debouncePUT,
-  workoutData,
-}: WorkoutProps) => {
+export const Workout = ({ PUT, POST, DELETE, workoutData }: WorkoutProps) => {
   const [openDialog, Dialog] = CreateOrEditWorkoutDialog();
   const [openPlayer, YoutubePlayer] = YoutubeVideoPlayer();
   const src = getYoutubeThumbnail(workoutData.youtubeID);
@@ -50,7 +44,7 @@ export const Workout = ({
           <div className="workout-buttons">
             <Button
               onClick={() =>
-                debouncePUT({ ...workoutData, weight: weight + increment })
+                PUT({ ...workoutData, weight: weight + increment })
               }
             >
               <Add />
@@ -59,7 +53,7 @@ export const Workout = ({
             <Button
               onClick={() => {
                 const newWeight = Math.max(0, weight - increment);
-                debouncePUT({ ...workoutData, weight: newWeight });
+                PUT({ ...workoutData, weight: newWeight });
               }}
             >
               <Minus />

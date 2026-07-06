@@ -18,13 +18,12 @@ export const WorkoutPage = ({
 }: WorkoutPageProps) => {
   const [openDialog, Dialog] = CreateOrEditWorkoutDialog();
   const [ErrorBanner, setErrorMessage] = useErrorBanner();
-  const {
-    workouts,
-    putWorkout,
-    postWorkout,
-    deleteWorkout,
-    debouncePutWorkout,
-  } = useWorkouts(userID, routineID, setTrigger, setErrorMessage);
+  const { workouts, putWorkout, postWorkout, deleteWorkout } = useWorkouts(
+    userID,
+    routineID,
+    setTrigger,
+    setErrorMessage,
+  );
   const [open, TimerScreen] = TimerDialog();
   return (
     <>
@@ -36,7 +35,6 @@ export const WorkoutPage = ({
             PUT={putWorkout}
             POST={postWorkout}
             DELETE={deleteWorkout}
-            debouncePUT={debouncePutWorkout}
           />
           <Divider width="90%" margin="0.5rem" />
         </Fragment>

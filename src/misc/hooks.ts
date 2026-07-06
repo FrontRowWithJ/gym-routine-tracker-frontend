@@ -13,7 +13,7 @@ import {
 import { parseJWT } from "./util";
 import { GymRoutineJWT, RoutineData, WorkoutData } from "./types";
 import { DEFAULT_ERROR_MESSAGE, ORIGIN } from "./constants";
-import { debounce, fetchWrapper } from "./fetchHandler";
+import { fetchWrapper } from "./fetchHandler";
 
 export const OFFLINE_USER_ID = -1;
 
@@ -224,18 +224,6 @@ export const useWorkouts = (
     );
   };
 
-  const updateLocalAfterPut = (workout: WorkoutData) => {
-    setWorkouts((workouts) => {
-      const index = workouts.findIndex(
-        ({ workoutID }) => workoutID === workout.workoutID,
-      );
-      const start = workouts.slice(0, index);
-      const end = workouts.slice(index + 1);
-      return [...start, workout, ...end];
-    });
-    putWorkoutIDB(workout);
-  };
-
   const putWorkout = useCallback(
     (workout: WorkoutData) => {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -252,10 +240,6 @@ export const useWorkouts = (
       );
     },
     [userID, setErrorMessage],
-  );
-
-  const debouncePutWorkout = useRef(
-    debounce(putWorkout, 500, updateLocalAfterPut),
   );
 
   const deleteWorkout = async (workout: WorkoutData) => {
@@ -276,7 +260,6 @@ export const useWorkouts = (
     putWorkout,
     postWorkout,
     deleteWorkout,
-    debouncePutWorkout: debouncePutWorkout.current,
   };
 };
 

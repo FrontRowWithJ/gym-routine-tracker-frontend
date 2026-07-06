@@ -105,18 +105,3 @@ export const fetchWrapper = async <
   clearTimeout(timeoutId);
   return result;
 };
-
-export const debounce = <F extends (...args: any[]) => any>(
-  func: F,
-  timeout: number,
-  refresh?: F,
-): ((...args: Parameters<F>) => Promise<Awaited<ReturnType<F>>>) => {
-  let timeoutID: ReturnType<typeof setTimeout> | undefined = undefined;
-  return (...args) => {
-    clearTimeout(timeoutID);
-    refresh?.(...args);
-    return new Promise((resolve) => {
-      timeoutID = setTimeout(() => resolve(func(...args)), timeout);
-    });
-  };
-};

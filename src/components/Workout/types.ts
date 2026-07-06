@@ -5,5 +5,4 @@ export type WorkoutProps = {
   PUT: WorkoutFetchFuncs["putWorkout"];
   POST: WorkoutFetchFuncs["postWorkout"];
   DELETE: WorkoutFetchFuncs["deleteWorkout"];
-  debouncePUT: WorkoutFetchFuncs["debouncePutWorkout"];
 };
